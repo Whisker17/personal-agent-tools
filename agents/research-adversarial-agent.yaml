@@ -1,0 +1,25 @@
+name: research-adversarial-agent
+description: Adversarial reviewer for crypto/DeFi research reports — actively challenges claims, probes logical gaps, stress-tests assumptions
+runtime: codex
+model: gpt-5.5
+
+system_instructions: prompts/system/research-adversarial-agent.md
+
+skills:
+  - github:openai/codex-plugin-cc
+
+knowledge:
+  - knowledge/shared/research-methodology.md
+
+parameters:
+  - key: research_report
+    type: text
+    description: The full research report output from the research agent to adversarially review
+  - key: github_repo
+    type: text
+    description: Optional. GitHub repo (owner/name) to persist the adversarial review to. Created by project-planner.
+
+max_concurrent_tasks: 1
+custom_env: {}
+custom_args: []
+visibility: private

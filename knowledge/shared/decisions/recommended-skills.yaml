@@ -1,0 +1,21 @@
+# Curated skill allowlist for Multica agents
+# See 001-v1-skill-source-strategy.md for decision rationale and trigger conditions.
+
+# Schema:
+#
+# skills:
+#   - name: <skill-name>               # Required. Skill identifier
+#     source: <url-or-multica-id>       # Required. Where to find the skill
+#     agents: [<agent-name>, ...]       # Required. Which agents should use this skill (must match agents/<name>.yaml)
+#     reason: <why-this-skill>          # Required. Justification for adding
+#     added: <YYYY-MM-DD>              # Required. Date added
+#     last_evaluated: <YYYY-MM-DD>     # Optional. Date of last relevance review (omit until first review)
+#     status: evaluating | active | deprecated  # Required. Current status
+
+skills:
+  - name: Deep-Research-skills
+    source: github:Weizhena/Deep-Research-skills
+    agents: [research-agent]
+    reason: "Structured deep research workflow with parallel agents, outline generation, and report compilation. 739 stars, MIT license, active maintenance. Provides /research, /research-deep, /research-report commands."
+    added: 2026-05-15
+    status: active

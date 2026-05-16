@@ -1,0 +1,25 @@
+name: project-planner-agent
+description: Reads Multica project descriptions and creates structured Milestones + Issues via Multica CLI
+runtime: claude-code
+model: claude-sonnet-4-6
+
+system_instructions: prompts/system/project-planner-agent.md
+
+skills:
+  - skills/project-planner
+
+knowledge:
+  - knowledge/per-agent/project-planner-agent/example-structures.md
+
+parameters:
+  - key: project_id
+    type: text
+    description: The Multica project ID or name to plan
+  - key: guidance
+    type: text
+    description: Optional user instructions (e.g. milestone count, priority areas, constraints)
+
+max_concurrent_tasks: 1
+custom_env: {}
+custom_args: []
+visibility: private

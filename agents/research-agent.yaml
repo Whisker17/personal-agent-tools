@@ -1,0 +1,28 @@
+name: research-agent
+description: Deep research analyst for crypto/DeFi topics, combining web research with codebase analysis
+runtime: claude-code
+model: claude-sonnet-4-6
+
+system_instructions: prompts/system/research-agent.md
+
+skills:
+  - github:Weizhena/Deep-Research-skills
+
+knowledge:
+  - knowledge/shared/research-methodology.md
+
+parameters:
+  - key: topic
+    type: text
+    description: The research question or subject to investigate
+  - key: codebase
+    type: text
+    description: Repo path or URL to analyze alongside web research
+  - key: github_repo
+    type: text
+    description: Optional. GitHub repo (owner/name) to persist the research report to. Created by project-planner.
+
+max_concurrent_tasks: 1
+custom_env: {}
+custom_args: []
+visibility: private

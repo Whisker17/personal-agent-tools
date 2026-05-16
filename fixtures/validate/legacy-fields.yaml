@@ -1,0 +1,10 @@
+name: legacy-fields
+description: Agent using deprecated field names
+tool: claude-code
+env:
+  DEBUG: "true"
+cli_args:
+  - --verbose
+concurrency: 3
+model: claude-sonnet-4-6
+system_instructions: prompts/system/research-agent.md
