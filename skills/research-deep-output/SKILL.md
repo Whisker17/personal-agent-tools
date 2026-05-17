@@ -1,9 +1,6 @@
 ---
 name: research-deep-output
-description: >
-  Use when producing a persisted research section draft from an approved outline, revising a draft
-  from adversarial feedback, promoting an approved draft to final.md, or preparing Research Agent
-  handoff data for the squad protocol.
+description: "Use when producing a persisted research section draft from an approved outline, revising a draft from adversarial feedback, promoting an approved draft to final.md, or preparing Research Agent handoff data for the squad protocol."
 allowed-tools:
   - Bash
   - Read

@@ -1,9 +1,6 @@
 ---
 name: crypto-adversarial-review
-description: >
-  Use when adversarially reviewing crypto, blockchain, DeFi, tokenomics, governance, protocol,
-  L1/L2, or investment research; stress-testing claims; checking source integrity; or finding
-  decision-relevant weaknesses.
+description: "Use when adversarially reviewing crypto, blockchain, DeFi, tokenomics, governance, protocol, L1/L2, or investment research; stress-testing claims; checking source integrity; or finding decision-relevant weaknesses."
 ---
 
 # Crypto Adversarial Review

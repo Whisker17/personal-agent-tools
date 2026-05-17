@@ -1,9 +1,6 @@
 ---
 name: research-outline
-description: >
-  Use when creating or revising a structured research outline, breaking a topic into researchable
-  items, defining investigation fields, planning diagrams, source requirements, and persisted
-  outline artifacts for the research squad.
+description: "Use when creating or revising a structured research outline, breaking a topic into researchable items, defining investigation fields, planning diagrams, source requirements, and persisted outline artifacts for the research squad."
 allowed-tools:
   - Bash
   - Read

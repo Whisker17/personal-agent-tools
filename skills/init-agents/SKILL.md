@@ -1,8 +1,6 @@
 ---
 name: init-agents
-description: >
-  Use when designing, creating, or updating a Multica agent config, system prompt, parameter set,
-  skill attachment list, or new local skill for an agent.
+description: "Use when designing, creating, or updating a Multica agent config, system prompt, parameter set, skill attachment list, or new local skill for an agent."
 triggers:
   - "init agent"
   - "create agent"

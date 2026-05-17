@@ -1,9 +1,6 @@
 ---
 name: project-orchestration
-description: >
-  Use when coordinating a Multica research squad project, dispatching planner/research/review/TW
-  agents, resuming orchestration, managing a run ledger, serializing _index.md writes, or deciding
-  approve/revise/accept-risk/block transitions.
+description: "Use when coordinating a Multica research squad project, dispatching planner/research/review/TW agents, resuming orchestration, managing a run ledger, serializing _index.md writes, or deciding approve/revise/accept-risk/block transitions."
 ---
 
 # Project Orchestration

@@ -1,9 +1,6 @@
 ---
 name: research-review
-description: >
-  Use when adversarially reviewing a persisted research outline or draft, producing patch
-  proposals, checking source integrity, evaluating diagram correctness, or recommending
-  approve/revise/reject decisions to Orchestrator.
+description: "Use when adversarially reviewing a persisted research outline or draft, producing patch proposals, checking source integrity, evaluating diagram correctness, or recommending approve/revise/reject decisions to Orchestrator."
 allowed-tools:
   - Bash
   - Read

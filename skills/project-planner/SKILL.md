@@ -1,9 +1,6 @@
 ---
 name: project-planner
-description: >
-  Use when decomposing a Multica research project into issues, stable slugs, artifact paths,
-  dependency waves, agent assignment labels, a Technical Writer reserved issue, or a Planner
-  completion notification.
+description: "Use when decomposing a Multica research project into issues, stable slugs, artifact paths, dependency waves, agent assignment labels, a Technical Writer reserved issue, or a Planner completion notification."
 ---
 
 # Project Planner

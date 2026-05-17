@@ -1,9 +1,6 @@
 ---
 name: technical-writer-reporting
-description: >
-  Use when synthesizing completed research sections into a final report, validating upstream
-  Research Complete handoffs, preserving source traceability, handling cross-section conflicts,
-  deciding diagram rendering, or posting Final Report Ready.
+description: "Use when synthesizing completed research sections into a final report, validating upstream Research Complete handoffs, preserving source traceability, handling cross-section conflicts, deciding diagram rendering, or posting Final Report Ready."
 ---
 
 # Technical Writer Reporting
