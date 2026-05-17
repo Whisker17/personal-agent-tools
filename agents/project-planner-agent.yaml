@@ -8,9 +8,7 @@ system_instructions: prompts/system/project-planner-agent.md
 skills:
   - skills/project-planner
 
-knowledge:
-  - knowledge/per-agent/project-planner-agent/example-structures.md
-  - knowledge/shared/squad-communication-protocol.md
+knowledge: []
 
 parameters:
   - key: project_id

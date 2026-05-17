@@ -8,8 +8,7 @@ system_instructions: prompts/system/technical-writer-agent.md
 skills:
   - skills/technical-writer-reporting
 
-knowledge:
-  - knowledge/shared/research-methodology.md
+knowledge: []
 
 parameters:
   - key: project_id

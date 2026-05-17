@@ -9,9 +9,7 @@ skills:
   - skills/research-review
   - github:openai/codex-plugin-cc
 
-knowledge:
-  - knowledge/shared/research-methodology.md
-  - knowledge/shared/research-outline-schema.md
+knowledge: []
 
 parameters:
   - key: multica_issue_id

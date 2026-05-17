@@ -8,9 +8,7 @@ system_instructions: prompts/system/project-orchestrator-agent.md
 skills:
   - skills/project-orchestration
 
-knowledge:
-  - knowledge/shared/squad-communication-protocol.md
-  - knowledge/shared/research-outline-schema.md
+knowledge: []
 
 parameters:
   - key: project_id

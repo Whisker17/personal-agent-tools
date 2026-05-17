@@ -179,7 +179,7 @@ Keep skills: [] for v1. Add when E2E testing reveals a need.
 ## Acceptance Criteria
 
 - [ ] One option selected with documented rationale
-- [ ] Decision recorded in knowledge/shared/decisions/
+- [ ] Decision recorded in the configured decision-log location
 - [ ] Affected agent configs updated if necessary
 ```
 
