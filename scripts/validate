@@ -7,7 +7,10 @@ import os
 import re
 import sys
 
-import yaml
+try:
+    import yaml
+except ModuleNotFoundError:  # pragma: no cover - exercised in minimal local envs
+    yaml = None
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -23,6 +26,89 @@ LEGACY_FIELDS = {
 GITHUB_REF_PATTERN = re.compile(r"^github:[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$")
 
 
+class YamlParseError(Exception):
+    pass
+
+
+def _parse_scalar(value):
+    value = value.strip()
+    if value in {"", "null", "None", "~"}:
+        return None
+    if value == "{}":
+        return {}
+    if value == "[]":
+        return []
+    if value in {"true", "false"}:
+        return value == "true"
+    if value.startswith('"') and value.endswith('"'):
+        return value[1:-1]
+    if value.startswith("'") and value.endswith("'"):
+        return value[1:-1]
+    if re.fullmatch(r"-?\d+", value):
+        return int(value)
+    return value
+
+
+def _fallback_safe_load(text):
+    """Parse the small YAML subset used by agent config files."""
+    data = {}
+    current_key = None
+    current_list = None
+
+    for lineno, raw_line in enumerate(text.splitlines(), start=1):
+        line = raw_line.split("#", 1)[0].rstrip()
+        if not line.strip():
+            continue
+
+        indent = len(raw_line) - len(raw_line.lstrip(" "))
+        stripped = line.strip()
+
+        if indent == 0:
+            current_key = None
+            current_list = None
+            if ":" not in stripped:
+                raise YamlParseError(f"line {lineno}: expected key: value")
+            key, value = stripped.split(":", 1)
+            key = key.strip()
+            value = value.strip()
+            if value == "":
+                data[key] = []
+                current_key = key
+                current_list = data[key]
+            else:
+                data[key] = _parse_scalar(value)
+            continue
+
+        if current_list is not None and stripped.startswith("- "):
+            item = stripped[2:].strip()
+            if re.search(r":\s+", item):
+                key, value = item.split(":", 1)
+                current_list.append({key.strip(): _parse_scalar(value)})
+            else:
+                current_list.append(_parse_scalar(item))
+            continue
+
+        if current_list is not None and current_list and isinstance(current_list[-1], dict):
+            if ":" not in stripped:
+                raise YamlParseError(f"line {lineno}: expected nested key: value")
+            key, value = stripped.split(":", 1)
+            current_list[-1][key.strip()] = _parse_scalar(value)
+            continue
+
+        if current_key is not None:
+            continue
+
+        raise YamlParseError(f"line {lineno}: unsupported YAML structure")
+
+    return data
+
+
+def load_yaml(text):
+    if yaml is not None:
+        return yaml.safe_load(text)
+    return _fallback_safe_load(text)
+
+
 def validate_agent(filepath):
     errors = []
     filename = os.path.basename(filepath)
@@ -30,8 +116,8 @@ def validate_agent(filepath):
 
     try:
         with open(filepath) as f:
-            data = yaml.safe_load(f)
-    except yaml.YAMLError as e:
+            data = load_yaml(f.read())
+    except (YamlParseError, getattr(yaml, "YAMLError", YamlParseError)) as e:
         errors.append(f"YAML parse error: {e}")
         return errors
 
@@ -78,8 +164,11 @@ def validate_agent(filepath):
             if not GITHUB_REF_PATTERN.match(ref):
                 errors.append(f"Invalid format: {ref}")
         elif isinstance(ref, str):
-            if not os.path.exists(os.path.join(REPO_ROOT, ref)):
+            full = os.path.join(REPO_ROOT, ref)
+            if not os.path.exists(full):
                 errors.append(f"Missing: {ref}")
+            elif os.path.isdir(full) and not os.path.isfile(os.path.join(full, "SKILL.md")):
+                errors.append(f"Missing skill file: {ref}/SKILL.md")
         else:
             errors.append(f"Invalid skill entry: {ref}")
 

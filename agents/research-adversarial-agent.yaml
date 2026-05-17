@@ -1,23 +1,46 @@
 name: research-adversarial-agent
-description: Adversarial reviewer for crypto/DeFi research reports — actively challenges claims, probes logical gaps, stress-tests assumptions
+description: Adversarial reviewer for research outlines and section drafts — challenges structural integrity, coverage, source quality, and logical rigor
 runtime: codex
 model: gpt-5.5
 
 system_instructions: prompts/system/research-adversarial-agent.md
 
 skills:
+  - skills/research-review
   - github:openai/codex-plugin-cc
 
 knowledge:
   - knowledge/shared/research-methodology.md
+  - knowledge/shared/research-outline-schema.md
 
 parameters:
-  - key: research_report
+  - key: multica_issue_id
     type: text
-    description: The full research report output from the research agent to adversarially review
+    description: Multica research issue ID to post review comments on
+  - key: review_type
+    type: text
+    description: '"outline" for Phase A outline review, "draft" for Phase B draft review'
+  - key: artifact_path
+    type: text
+    description: GitHub path to the outline or draft to review
+  - key: artifact_commit
+    type: text
+    description: Commit URL/SHA of the artifact to review
+  - key: project_slug
+    type: text
+    description: Stable project identifier
+  - key: topic_slug
+    type: text
+    description: Stable topic identifier (never a Linear issue ID)
   - key: github_repo
     type: text
-    description: Optional. GitHub repo (owner/name) to persist the adversarial review to. Created by project-planner.
+    description: Optional. GitHub repo (owner/name). Default Whisker17/multica-research
+  - key: round
+    type: text
+    description: Current round number of the artifact being reviewed
+  - key: prior_patches
+    type: text
+    description: Optional. Summary of patches from previous rounds that were rejected
 
 max_concurrent_tasks: 1
 custom_env: {}

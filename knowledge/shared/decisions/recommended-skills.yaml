@@ -16,6 +16,7 @@ skills:
   - name: Deep-Research-skills
     source: github:Weizhena/Deep-Research-skills
     agents: [research-agent]
-    reason: "Structured deep research workflow with parallel agents, outline generation, and report compilation. 739 stars, MIT license, active maintenance. Provides /research, /research-deep, /research-report commands."
+    reason: "Deprecated for this repo by WHI-435. Research Agent now uses local skills/research-outline and skills/research-deep-output, with skills/research-review used by the adversarial agent."
     added: 2026-05-15
-    status: active
+    last_evaluated: 2026-05-17
+    status: deprecated

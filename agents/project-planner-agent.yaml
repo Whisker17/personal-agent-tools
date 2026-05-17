@@ -1,5 +1,5 @@
 name: project-planner-agent
-description: Reads Multica project descriptions and creates structured Milestones + Issues via Multica CLI
+description: Decomposes Multica research projects into structured issues with parallel-wave dependency graphs, stable slugs, and handoff contracts
 runtime: claude-code
 model: claude-sonnet-4-6
 
@@ -10,14 +10,27 @@ skills:
 
 knowledge:
   - knowledge/per-agent/project-planner-agent/example-structures.md
+  - knowledge/shared/squad-communication-protocol.md
 
 parameters:
   - key: project_id
     type: text
-    description: The Multica project ID or name to plan
-  - key: guidance
+    description: The Multica project ID
+  - key: project_description
     type: text
-    description: Optional user instructions (e.g. milestone count, priority areas, constraints)
+    description: Full project description text
+  - key: github_repo
+    type: text
+    description: Target GitHub repository URL (default Whisker17/multica-research)
+  - key: orchestrator_context
+    type: text
+    description: Originating Orchestrator issue/comment context inside the Multica project
+  - key: research_depth
+    type: text
+    description: Expected depth/scope (quick-scan, standard, deep-dive)
+  - key: project_slug
+    type: text
+    description: Optional pre-defined project slug. If missing, Planner derives one.
 
 max_concurrent_tasks: 1
 custom_env: {}

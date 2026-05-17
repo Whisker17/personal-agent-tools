@@ -111,11 +111,19 @@ Rule of thumb: if it tells the agent what steps to follow or how to judge qualit
 
 ## Skills Management
 
-Skills are git submodules referencing external repos. Skill content is not written in this repo.
+Skills use two sourcing patterns (see ADR 002):
+
+### Local skills (`skills/<name>/`)
+Agent-specific workflow skills written directly in this repo. Use when the skill is tightly coupled to an agent config in this repo and has no reuse need outside it.
+
+- Create: `mkdir -p skills/<name>` and add `SKILL.md` + optional `references/`
+- These are NOT submodules — they are version-controlled alongside agent configs
+
+### External skills (`github:owner/repo`)
+Reusable skills maintained in separate repos. Use when the skill is useful across multiple projects or has independent versioning needs.
 
 - Add: `git submodule add <url> skills/<name>`
 - Update: `git submodule update --remote --merge`
-- Skills are consumed as-is from upstream repos. This repo does not publish or distribute skills.
 
 ## Knowledge Base
 
@@ -136,7 +144,7 @@ Skills are git submodules referencing external repos. Skill content is not writt
 2. Write `prompts/system/<agent-name>.md` system instructions
 3. If shared prompt fragments are needed, add to `prompts/shared/`
 4. If agent-specific knowledge is needed, create `knowledge/per-agent/<agent-name>/`
-5. If new skills are needed, add via `git submodule add`
+5. If new skills are needed, create locally in `skills/<name>/` (agent-specific) or add via `git submodule add` (reusable/external)
 6. Create the agent on Multica following the config, attach corresponding skills
 
 ## Linear Status Sync Rules
@@ -150,6 +158,8 @@ Skills are git submodules referencing external repos. Skill content is not writt
 - **research-agent** - Researches a given topic, produces structured reports
 - **research-adversarial-agent** - Adversarial reviewer for crypto/DeFi research reports (GPT-5.5 via Codex)
 - **project-planner-agent** - Reads Multica project descriptions and creates structured Milestones + Issues via Multica CLI
+- **project-orchestrator-agent** - Orchestrates end-to-end project execution by dispatching planning, work, and review to specialized agents
+- **technical-writer-agent** - Aggregates completed research sections into the final project report
 
 ## Skill routing
 

@@ -1,0 +1,26 @@
+name: project-orchestrator-agent
+description: Orchestrates end-to-end research project execution — dispatches agents, manages run ledger, serializes _index.md writes, and coordinates the full planning-to-report pipeline via Multica
+runtime: claude-code
+model: claude-sonnet-4-6
+
+system_instructions: prompts/system/project-orchestrator-agent.md
+
+skills:
+  - skills/project-orchestration
+
+knowledge:
+  - knowledge/shared/squad-communication-protocol.md
+  - knowledge/shared/research-outline-schema.md
+
+parameters:
+  - key: project_id
+    type: text
+    description: The Multica project ID or name to orchestrate
+  - key: anchor_issue_id
+    type: text
+    description: Optional. Multica issue ID for preflight results, run ledger, and orchestration comments. If omitted, Orchestrator creates one.
+
+max_concurrent_tasks: 1
+custom_env: {}
+custom_args: []
+visibility: private

@@ -2,6 +2,8 @@
 
 Real-world examples showing the expected quality level. Read this file when you need inspiration for structuring milestones and issues.
 
+**Implementation note**: Milestones are implemented as **labels** in Multica (not parent issues). All issues are flat. The `Issues:` lists below show which issues receive each milestone label.
+
 ## Table of Contents
 
 1. [Research Project Example](#research-project)
@@ -88,6 +90,11 @@ M2: Knowledge Base & Scaling
 
 **Key patterns**: M0 for foundation, includes explicit "decision issues" (skill source strategy, lock direction), includes "review issues" (GPT review), clear dependency chains.
 
+**Dependency highlights**:
+- Parallelizable starts: scaffolding, CLAUDE.md review, README review, GPT review can all begin simultaneously
+- Convergence point: "Lock project direction" blocks on reviews + decisions before M1 can begin
+- M1/#3 (shared prompt fragments) has no blockers — can start in parallel with M0 work
+
 ---
 
 ## Monitoring Project
@@ -149,6 +156,11 @@ Deep Dive #8: 综合评估 — 技术定位
 
 Decide the v1 strategy for finding and attaching skills to agents. This is a decision issue, not a build issue.
 
+## Dependencies
+
+blocked_by: ["M0/GPT review of architecture and design decisions"]
+blocks: ["M0/Lock project direction", "M1/Create agent YAML configs"]
+
 ## Why This Matters
 
 Each Multica agent has a `skills` field. We need a strategy for populating it before E2E testing. Premature skill discovery wastes effort; no strategy means ad-hoc decisions.
@@ -177,6 +189,11 @@ Keep skills: [] for v1. Add when E2E testing reveals a need.
 ## Goal
 
 深入理解 Paladin 的整体架构设计，形成对项目全貌的认知。
+
+## Dependencies
+
+blocked_by: []
+blocks: ["M1/Noto 域深入分析", "M1/Zeto 域深入分析", "M1/Pente 域深入分析", "M1/运行时核心组件分析"]
 
 ## Task Breakdown
 
@@ -216,6 +233,8 @@ Things to avoid when designing milestones and issues:
 | Mega-issue covering 5+ tasks | Untrackable, hard to review | Split into focused issues |
 | "TBD" or empty descriptions | Can't start working on it | Write enough detail to begin |
 | All issues at same priority | Priority loses meaning | Differentiate by blocking impact |
-| No prerequisites listed | Execution order unclear | Explicit dependency chain |
+| No `## Dependencies` section | Executors can't determine parallel order | Every issue gets `blocked_by` + `blocks`, even if empty |
+| Sequential blocking by default | Kills parallelism — forces serial execution | Only block when there's a real data/artifact dependency |
+| Title-only references after creation | Not machine-parseable, brittle | Backfill with issue IDs (WHI-3) after creation |
 | Milestones without success criteria | Can't tell when it's done | Add concrete "done" definition |
 | Adding scope not in the description | Scope creep | Decompose only what's there |
