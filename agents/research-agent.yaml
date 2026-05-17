@@ -14,7 +14,7 @@ knowledge: []
 parameters:
   - key: mode
     type: text
-    description: Optional. "squad" (default) or "standalone". Squad mode requires report_issue_id and Orchestrator coordination.
+    description: Optional. "squad" (default) or "standalone". Squad mode requires Orchestrator coordination. When Orchestrator dispatches with report_issue_id, Research Agent posts Research Complete after receiving sections_index_commit. When dispatched without report_issue_id (single-issue lightweight), Research Agent stops at Final Promotion Ready.
   - key: multica_issue_id
     type: text
     description: Multica issue ID for the research task. Used in all message templates and comments.
@@ -80,10 +80,10 @@ parameters:
     description: Required for TW handoff. Total deep draft rounds completed.
   - key: order
     type: text
-    description: Required for promotion. Section order number assigned by Planner for the Index Entry Proposal.
+    description: Required for composable final promotion when report_issue_id is present; omitted in single-issue lightweight mode. Section order number for the Index Entry Proposal.
   - key: dependencies
     type: text
-    description: Optional for promotion. Upstream topic_slug list (comma-separated) or "-" if none.
+    description: Required for composable final promotion when report_issue_id is present; omitted in single-issue lightweight mode. Upstream topic_slug list (comma-separated) or "-" if none.
 
 max_concurrent_tasks: 1
 custom_env: {}

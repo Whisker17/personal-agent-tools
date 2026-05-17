@@ -13,10 +13,19 @@ knowledge: []
 parameters:
   - key: project_id
     type: text
-    description: The Multica project ID or name to orchestrate
+    description: Multica project ID or name. Required in project mode. Optional context in single-issue mode.
   - key: anchor_issue_id
     type: text
-    description: Optional. Multica issue ID for preflight results, run ledger, and orchestration comments. If omitted, Orchestrator creates one.
+    description: Optional. Multica issue ID for preflight results, run ledger, and orchestration comments. In single-issue mode, defaults to the research issue itself if omitted.
+  - key: single_issue_id
+    type: text
+    description: Optional. When provided, Orchestrator runs in single-issue mode — only orchestrates the specified research issue through the full pipeline, skipping Planner dispatch and full-project batch management.
+  - key: report_issue_id
+    type: text
+    description: Optional in single-issue mode. TW reserved issue ID. When provided, Orchestrator writes _index.md and Research Agent posts Research Complete to this issue, preserving composability with project mode and future TW aggregation. When absent, pipeline ends at final.md + closing comment (lightweight mode).
+  - key: project_slug
+    type: text
+    description: Optional in single-issue mode. If omitted, Orchestrator derives it from issue context or asks for clarification.
 
 max_concurrent_tasks: 1
 custom_env: {}

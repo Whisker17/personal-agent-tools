@@ -29,7 +29,11 @@ Required for draft mode: `outline_path` or `outline_content`, `topic`, `project_
 
 Optional: `github_repo`, `codebase_path`, `adversarial_feedback`.
 
-Required for promotion mode: `promote: true`, `approved_draft_path`, `approved_draft_round`, `approved_draft_commit`, `approval_evidence`, `multica_issue_id`, `order`, and `dependencies`.
+Required for promotion mode (always): `promote: true`, `approved_draft_path`, `approved_draft_round`, `approved_draft_commit`, `approval_evidence`, `multica_issue_id`, `project_slug`, `topic_slug`, `github_repo`, `round`.
+
+Required for composable promotion only (when `report_issue_id` is present): `order`, `dependencies`. These produce the Index Entry Proposal.
+
+Not required in lightweight promotion (no `report_issue_id`): `order`, `dependencies`. No Index Entry Proposal is produced.
 
 ## Rules
 
@@ -38,4 +42,4 @@ Required for promotion mode: `promote: true`, `approved_draft_path`, `approved_d
 - Revision mode targets flagged issues; do not restart unless instructed.
 - Promotion performs file promotion and metadata assembly only; no new research.
 - Never write `_index.md`.
-- Never post or imply Research Complete before Orchestrator provides the `_index.md` commit.
+- Never post or imply Research Complete before Orchestrator provides the `_index.md` commit. In single-issue lightweight mode (no `report_issue_id`), Research Complete is not posted — pipeline ends at Final Promotion Ready.

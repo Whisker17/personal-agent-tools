@@ -57,15 +57,21 @@ Return path, commit URL/SHA, round, mode, items covered, fields investigated, di
 
 Only run when `promote: true`.
 
-Required inputs:
+### Always Required Inputs
 
 - `approved_draft_path`
 - `approved_draft_round`
 - `approved_draft_commit`
 - `approval_evidence`
 - `multica_issue_id`
-- `order`
-- `dependencies`
+- `project_slug`
+- `topic_slug`
+- `github_repo`
+- `round`
+
+### Composable Mode Only (when `report_issue_id` is present)
+
+Also required: `order`, `dependencies`.
 
 Fetch the approved draft, verify the commit, write:
 
@@ -73,11 +79,21 @@ Fetch the approved draft, verify the commit, write:
 
 Return final path, final commit, reviewed draft identity, approval evidence, and Index Entry Proposal.
 
-Do not write `_index.md`.
+### Lightweight Mode (no `report_issue_id`)
+
+`order` and `dependencies` are not required. No Index Entry Proposal is produced.
+
+Fetch the approved draft, verify the commit, write:
+
+`{project_slug}/research-sections/{topic_slug}/final.md`
+
+Return final path, final commit, reviewed draft identity, and approval evidence. The Final Promotion Ready message must include `Target agent: @Orchestrator` and `Next action: @Orchestrator run lightweight Done Gate and close research issue`.
+
+Do not write `_index.md` in either mode.
 
 ## TW Handoff Boundary
 
-This skill covers final promotion and the information needed for Final Promotion Ready. Research Complete happens only after Orchestrator commits `_index.md` and provides `sections_index_commit`.
+This skill covers final promotion and the information needed for Final Promotion Ready. In squad/composable mode, Research Complete happens only after Orchestrator commits `_index.md` and provides `sections_index_commit`. In single-issue lightweight mode (Orchestrator dispatch without `report_issue_id`), the pipeline ends at Final Promotion Ready — Research Agent does not post Research Complete or Done Gate Request.
 
 Use `squad-communication-protocol.md` for exact Final Promotion Ready, Research Complete, Done Gate Request, and BLOCKED templates.
 

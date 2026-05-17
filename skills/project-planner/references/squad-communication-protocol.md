@@ -81,7 +81,7 @@ All three skills share a common outline schema and must accept and propagate: `p
 
 ## 5. Protocol State Machine
 
-### States
+### States (Project Mode / Composable Single-Issue)
 
 ```text
 planned
@@ -101,6 +101,25 @@ planned
   -> reported-to-TW
   -> done
 ```
+
+### States (Lightweight Single-Issue — no `report_issue_id`)
+
+```text
+planned
+  -> outline-in-progress
+  -> outline-ready
+  -> outline-under-review
+  -> outline-approved
+  -> deep-draft-in-progress
+  -> deep-draft-ready
+  -> deep-draft-under-review
+  -> approved-for-final
+  -> final-promotion-in-progress
+  -> final-promotion-ready
+  -> done
+```
+
+In lightweight mode, the `index-update-*`, `tw-handoff-*`, and `reported-to-TW` states are skipped. After `final-promotion-ready`, Orchestrator runs the lightweight Done Gate and transitions directly to `done`.
 
 ### State Ownership Table
 
@@ -128,6 +147,8 @@ Only Orchestrator advances issue status. Worker agents may request status change
 
 ## 6. Done Gate
 
+### Project Mode / Composable Single-Issue Done Gate (11 items)
+
 A research issue may transition to `done` only when **all** of the following are true:
 
 1. Outline consensus reached (state passed through `outline-approved`).
@@ -142,6 +163,19 @@ A research issue may transition to `done` only when **all** of the following are
 10. Orchestrator acknowledged the TW handoff comment with `seen`/ACK.
 11. Orchestrator posted a closing comment summarizing outcome, artifact paths, TW handoff, and caveats.
 
+### Lightweight Single-Issue Done Gate (8 items — no `report_issue_id`)
+
+A research issue may transition to `done` only when **all** of the following are true:
+
+1. Outline consensus reached (state passed through `outline-approved`).
+2. At least one Phase B draft was persisted before adversarial review.
+3. The reviewed draft commit URL/SHA is recorded.
+4. Adversarial Agent has posted approval, or Orchestrator posted explicit `accept-risk` for a major finding.
+5. No unresolved critical finding remains.
+6. Final section persisted at `{project-slug}/research-sections/{topic-slug}/final.md`.
+7. Final Promotion Ready posted on research issue with final section path and commit; Index Entry Proposal is not required.
+8. Orchestrator posted closing comment on research issue.
+
 ## 7. Emoji Reaction Semantics
 
 | Symbol | Alias | Meaning | Applied by | Notes |
@@ -155,6 +189,15 @@ Blocked state is represented by a comment prefix (`BLOCKED:` or with warning emo
 ## 8. Message Type Templates
 
 Every message comment must include: `issue_id`, `project_slug`, `topic_slug`, `phase`, `round`, `target_agent`, and `next_action`. Artifact-related messages must also include artifact paths and commit URL/SHA. Project-level messages without a research topic use `topic_slug: final-report`.
+
+### Handoff Rules
+
+All agents must follow these rules when posting completion messages:
+
+- **Continuous tasks** (handoff required): when the current phase requires another agent or Orchestrator to continue, the completion message must explicitly @-mention the next agent in both `Target agent` and `Next action` fields. Writing only a role name or a vague next action is not sufficient.
+- **Terminal tasks** (stoppable): closing comments, BLOCKED messages awaiting human intervention, and final pipeline endpoints do not require @-mentioning a next agent. Use `Target agent: none` and `Next action: none` or `Next action: awaiting human input`.
+- In composable/project mode, the relay chain is: Final Promotion Ready → `@Orchestrator`, Research Complete → `@TechnicalWriter`, Done Gate Request → `@Orchestrator`, Final Report Ready → `@Orchestrator`.
+- In lightweight single-issue mode, Final Promotion Ready is still a continuous task: `Target agent: @Orchestrator`, `Next action: @Orchestrator run lightweight Done Gate and close research issue`. The Orchestrator closing comment is terminal.
 
 ### 8.1 Dispatch
 
@@ -270,6 +313,28 @@ Every message comment must include: `issue_id`, `project_slug`, `topic_slug`, `p
 **Next action**: Validate proposal, serialize `_index.md` update, then dispatch TW handoff
 ```
 
+#### 8.6.1 Final Promotion Ready (Lightweight — no `report_issue_id`)
+
+```markdown
+## Final Promotion Ready: {issue title}
+
+**Issue**: {multica_issue_id}
+**Project slug**: {project-slug}
+**Topic slug**: {topic-slug}
+**Phase**: final-promotion
+**Round**: {n}
+**Reviewed draft**: {project-slug}/research-sections/{topic-slug}/drafts/round-{n}.md
+**Reviewed draft commit/URL**: {commit hash or permalink}
+**Final section**: {project-slug}/research-sections/{topic-slug}/final.md
+**Final commit/URL**: {commit hash or permalink}
+**Adversarial approval or accept-risk**: {link}
+
+**Target agent**: @Orchestrator
+**Next action**: @Orchestrator run lightweight Done Gate and close research issue
+```
+
+The lightweight variant omits the Index Entry Proposal table. It is still a continuous task requiring explicit @Orchestrator handoff.
+
 ### 8.7 Research Complete
 
 Research Complete is posted on the **TW reserved issue** only after Orchestrator commits `_index.md`.
@@ -376,9 +441,17 @@ Done Gate Request is posted on the **research issue** after Research Complete is
 
 ### Final Promotion
 
+#### Composable / Project Mode (with `report_issue_id`)
+
 1. After approve or accept-risk, Research Agent writes `final.md` and posts **Final Promotion Ready** with Index Entry Proposal.
 2. Orchestrator validates the proposal against the run ledger and serializes an `_index.md` commit.
 3. Research Agent posts **Research Complete** on the TW reserved issue, including the `_index.md` commit URL/SHA, then posts **Done Gate Request** on the research issue.
+
+#### Lightweight Single-Issue Mode (no `report_issue_id`)
+
+1. After approve or accept-risk, Research Agent writes `final.md` and posts **Final Promotion Ready** (lightweight variant, no Index Entry Proposal).
+2. Orchestrator runs the lightweight Done Gate (8 items) and posts a closing comment on the research issue.
+3. Research Agent does not post Research Complete or Done Gate Request. The pipeline ends at the Orchestrator closing comment.
 
 ## 10. Max-Round and Risk Escalation Policy
 
@@ -410,7 +483,7 @@ Planner always creates a dedicated TW reserved issue with the following required
 
 ## 12. Index Entry Proposal Format
 
-Research Agent includes this proposal in the Final Promotion Ready comment. Orchestrator validates and serializes the write to `_index.md`.
+Research Agent includes this proposal in the Final Promotion Ready comment. Orchestrator validates and serializes the write to `_index.md`. This section applies only to project mode and composable single-issue mode (with `report_issue_id`). In lightweight single-issue mode, no Index Entry Proposal is produced or required.
 
 | Field | Description |
 |---|---|
@@ -446,3 +519,48 @@ Rules:
 - Only Orchestrator or a human relay executes pending actions.
 - Worker agents may request status changes via this payload, but Orchestrator remains the sole agent that advances issue status.
 - Pending action payloads must be complete and self-contained so they can be executed without additional context.
+
+## 14. Single-Issue Mode
+
+Single-issue mode allows Orchestrator to run the full research pipeline on a single issue without Planner dispatch or full-project batch management. Mode is triggered by passing `single_issue_id` to Orchestrator.
+
+### Mode Entry Rules
+
+| Condition | Mode |
+|---|---|
+| `single_issue_id` present | Single-issue mode |
+| `single_issue_id` absent, `project_id` present | Project mode (existing) |
+| Both absent | Error |
+
+### Two Paths
+
+- **Composable** (with `report_issue_id`): full pipeline including `_index.md`, Research Complete, 11-item Done Gate. Compatible with later TW aggregation across multiple single-issue runs.
+- **Lightweight** (no `report_issue_id`): pipeline ends at `final.md` + Orchestrator closing comment. 8-item Done Gate. No `_index.md`, no TW handoff.
+
+### Composability Scenario
+
+Users can run single-issue mode multiple times to incrementally build a project:
+
+1. Create a TW reserved issue (manually or via Planner).
+2. Run `@orchestrator single_issue_id=X report_issue_id=TW-issue` for each topic.
+3. Each completion auto-posts Research Complete to the TW issue; `_index.md` auto-appends with auto-incremented `order`.
+4. After all topics are done, dispatch TW agent for final aggregation.
+
+### Ledger
+
+Single-issue mode uses a single-row ledger with `mode: single-issue`. On `/resume`, the `mode` field determines which flow to follow.
+
+### Rerun Protection
+
+If `{project_slug}/research-sections/{topic_slug}/final.md` already exists:
+
+- Default: BLOCKED. Orchestrator refuses to start and comments on the issue.
+- Exception: active ledger resume where phase < `done`.
+- Override: user comments explicit confirmation; Orchestrator cleans up old artifacts and restarts.
+
+### Handoff Rules (Repeated for Emphasis)
+
+- Continuous tasks: completion messages must @-mention the next agent in both `Target agent` and `Next action`.
+- Terminal tasks: closing comments and BLOCKED states use `Target agent: none` / `Next action: none` or `Next action: awaiting human input`.
+- Lightweight Final Promotion Ready is continuous: `Target agent: @Orchestrator`, `Next action: @Orchestrator run lightweight Done Gate and close research issue`.
+- Orchestrator closing comment is terminal.

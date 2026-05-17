@@ -19,8 +19,9 @@ Read only the references needed for the current action:
 
 | Command | Use |
 |---|---|
-| `/orchestrate <project_id>` | Start or continue the full project flow. |
-| `/resume <project_id>` | Load the latest run ledger and continue. |
+| `/orchestrate <project_id>` | Start or continue the full project flow (project mode). |
+| `/orchestrate-issue <issue_id>` | Start single-issue mode for one research issue. Optional `report_issue_id` for composable path. |
+| `/resume <project_id_or_issue_id>` | Load the latest run ledger and continue. Accepts project ID or anchor/research issue ID. If ledger contains `mode: single-issue`, resumes in single-issue flow. |
 | `/status <project_id>` | Report current ledger state and next actions. |
 
 ## Core Workflow
