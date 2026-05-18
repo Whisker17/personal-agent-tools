@@ -1,0 +1,29 @@
+{
+  "report_date": "2026-05-19",
+  "timezone": "Asia/Shanghai",
+  "window": {
+    "since": "2026-05-19T00:00:00+08:00",
+    "until": "2026-05-20T00:00:00+08:00"
+  },
+  "coverage": "full",
+  "errors": [],
+  "repos": {
+    "owner/repo": {
+      "prs": {
+        "opened": [{"number": 13}],
+        "merged": [{"number": 11}, {"number": 13}],
+        "closed_unmerged": []
+      },
+      "commits": {
+        "count": 3,
+        "loc_added": 300,
+        "loc_removed": 70,
+        "files_changed": 8,
+        "by_type": {"fix": 1, "feature": 2},
+        "by_module": {"bridge": 5, "core": 3}
+      },
+      "releases": [],
+      "contributors_active": ["alice", "carol"]
+    }
+  }
+}

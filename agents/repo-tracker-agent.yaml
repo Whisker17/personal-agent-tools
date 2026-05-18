@@ -1,0 +1,23 @@
+name: repo-tracker-agent
+description: Tracks competitor GitHub repos and generates daily, weekly, and monthly competitive intelligence reports via Multica autopilot
+runtime: claude-code
+model: claude-sonnet-4-6
+
+system_instructions: prompts/system/repo-tracker-agent.md
+
+skills:
+  - skills/repo-tracker
+
+knowledge:
+  - knowledge/per-agent/repo-tracker-agent/autopilot-setup.md
+  - knowledge/per-agent/repo-tracker-agent/autopilot-runbook.md
+
+parameters:
+  - key: autopilot_description
+    type: text
+    description: Multica autopilot description containing Track repos, Report type, Focus, Self repo, Language, Data repo, and Timezone lines.
+
+max_concurrent_tasks: 1
+custom_env: {}
+custom_args: []
+visibility: private

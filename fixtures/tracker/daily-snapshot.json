@@ -1,0 +1,313 @@
+{
+  "autopilot_run_id": "fixture-run",
+  "coverage": "full",
+  "errors": [],
+  "report_date": "2026-05-18",
+  "repos": {
+    "owner/repo": {
+      "commits": {
+        "by_module": {
+          "bridge": 3,
+          "docs": 2
+        },
+        "by_type": {
+          "docs": 1,
+          "fix": 1
+        },
+        "count": 2,
+        "files_changed": 5,
+        "items": [
+          {
+            "additions": 120,
+            "author": "bob",
+            "date": "2026-05-18T11:20:00+08:00",
+            "deletions": 40,
+            "files_changed": 3,
+            "message": "fix: harden bridge validation",
+            "sha": "abc1234",
+            "type": "fix"
+          },
+          {
+            "additions": 30,
+            "author": "alice",
+            "date": "2026-05-18T15:40:00+08:00",
+            "deletions": 5,
+            "files_changed": 2,
+            "message": "docs: update bridge operations",
+            "sha": "def5678",
+            "type": "docs"
+          }
+        ],
+        "loc_added": 150,
+        "loc_removed": 45
+      },
+      "contributors_active": [
+        "alice",
+        "bob"
+      ],
+      "default_branch": "main",
+      "key_prs": [
+        {
+          "additions": 120,
+          "author": "bob",
+          "changed_files": 3,
+          "content_signals": {
+            "body_excerpt": "",
+            "changed_files": [],
+            "commit_subjects": [],
+            "modules": [],
+            "summary_basis": []
+          },
+          "current_status": "merged",
+          "deletions": 40,
+          "event_types": [
+            "merged"
+          ],
+          "evidence": "160 LOC, 3 files, labels: security",
+          "importance_score": 5235,
+          "labels": [
+            "security"
+          ],
+          "number": 10,
+          "review_time_hours": 20.5,
+          "title": "fix: harden bridge validation"
+        },
+        {
+          "additions": 900,
+          "author": "carol",
+          "changed_files": 14,
+          "content_signals": {
+            "body_excerpt": "",
+            "changed_files": [],
+            "commit_subjects": [],
+            "modules": [],
+            "summary_basis": []
+          },
+          "current_status": "draft",
+          "deletions": 200,
+          "event_types": [
+            "updated_open"
+          ],
+          "evidence": "1100 LOC, 14 files, labels: architecture",
+          "importance_score": 3950,
+          "labels": [
+            "architecture"
+          ],
+          "number": 14,
+          "review_time_hours": null,
+          "title": "draft: bridge relayer redesign"
+        },
+        {
+          "additions": 240,
+          "author": "alice",
+          "changed_files": 5,
+          "content_signals": {
+            "body_excerpt": "",
+            "changed_files": [],
+            "commit_subjects": [],
+            "modules": [],
+            "summary_basis": []
+          },
+          "current_status": "open",
+          "deletions": 12,
+          "event_types": [
+            "opened"
+          ],
+          "evidence": "252 LOC, 5 files, labels: feature",
+          "importance_score": 3877,
+          "labels": [
+            "feature"
+          ],
+          "number": 12,
+          "review_time_hours": null,
+          "title": "feat: add bridge monitor"
+        }
+      ],
+      "pr_status": {
+        "closed_unmerged": [],
+        "draft": [
+          {
+            "additions": 900,
+            "changed_files": 14,
+            "closed_at": null,
+            "content_signals": {
+              "body_excerpt": "",
+              "changed_files": [],
+              "commit_subjects": [],
+              "modules": [],
+              "summary_basis": []
+            },
+            "created_at": "2026-05-10T10:00:00+08:00",
+            "current_status": "draft",
+            "deletions": 200,
+            "draft": true,
+            "labels": [
+              "architecture"
+            ],
+            "merged_at": null,
+            "number": 14,
+            "review_time_hours": null,
+            "state": "open",
+            "title": "draft: bridge relayer redesign",
+            "updated_at": "2026-05-18T10:00:00+08:00",
+            "user": "carol"
+          }
+        ],
+        "merged": [
+          {
+            "additions": 120,
+            "changed_files": 3,
+            "closed_at": "2026-05-18T11:30:00+08:00",
+            "content_signals": {
+              "body_excerpt": "",
+              "changed_files": [],
+              "commit_subjects": [],
+              "modules": [],
+              "summary_basis": []
+            },
+            "created_at": "2026-05-17T15:00:00+08:00",
+            "current_status": "merged",
+            "deletions": 40,
+            "draft": false,
+            "labels": [
+              "security"
+            ],
+            "merged_at": "2026-05-18T11:30:00+08:00",
+            "number": 10,
+            "review_time_hours": 20.5,
+            "state": "closed",
+            "title": "fix: harden bridge validation",
+            "user": "bob"
+          }
+        ],
+        "open": [
+          {
+            "additions": 240,
+            "changed_files": 5,
+            "closed_at": null,
+            "content_signals": {
+              "body_excerpt": "",
+              "changed_files": [],
+              "commit_subjects": [],
+              "modules": [],
+              "summary_basis": []
+            },
+            "created_at": "2026-05-18T03:00:00+08:00",
+            "current_status": "open",
+            "deletions": 12,
+            "draft": false,
+            "labels": [
+              "feature"
+            ],
+            "merged_at": null,
+            "number": 12,
+            "review_time_hours": null,
+            "state": "open",
+            "title": "feat: add bridge monitor",
+            "user": "alice"
+          }
+        ]
+      },
+      "prs": {
+        "closed_unmerged": [],
+        "merged": [
+          {
+            "additions": 120,
+            "changed_files": 3,
+            "closed_at": "2026-05-18T11:30:00+08:00",
+            "content_signals": {
+              "body_excerpt": "",
+              "changed_files": [],
+              "commit_subjects": [],
+              "modules": [],
+              "summary_basis": []
+            },
+            "created_at": "2026-05-17T15:00:00+08:00",
+            "current_status": "merged",
+            "deletions": 40,
+            "draft": false,
+            "labels": [
+              "security"
+            ],
+            "merged_at": "2026-05-18T11:30:00+08:00",
+            "number": 10,
+            "review_time_hours": 20.5,
+            "state": "closed",
+            "title": "fix: harden bridge validation",
+            "user": "bob"
+          }
+        ],
+        "opened": [
+          {
+            "additions": 240,
+            "changed_files": 5,
+            "closed_at": null,
+            "content_signals": {
+              "body_excerpt": "",
+              "changed_files": [],
+              "commit_subjects": [],
+              "modules": [],
+              "summary_basis": []
+            },
+            "created_at": "2026-05-18T03:00:00+08:00",
+            "current_status": "open",
+            "deletions": 12,
+            "draft": false,
+            "labels": [
+              "feature"
+            ],
+            "merged_at": null,
+            "number": 12,
+            "review_time_hours": null,
+            "state": "open",
+            "title": "feat: add bridge monitor",
+            "user": "alice"
+          }
+        ],
+        "updated_open": [
+          {
+            "additions": 900,
+            "changed_files": 14,
+            "closed_at": null,
+            "content_signals": {
+              "body_excerpt": "",
+              "changed_files": [],
+              "commit_subjects": [],
+              "modules": [],
+              "summary_basis": []
+            },
+            "created_at": "2026-05-10T10:00:00+08:00",
+            "current_status": "draft",
+            "deletions": 200,
+            "draft": true,
+            "labels": [
+              "architecture"
+            ],
+            "merged_at": null,
+            "number": 14,
+            "review_time_hours": null,
+            "state": "open",
+            "title": "draft: bridge relayer redesign",
+            "updated_at": "2026-05-18T10:00:00+08:00",
+            "user": "carol"
+          }
+        ]
+      },
+      "releases": [
+        {
+          "body": "Security hardening for bridge validation.",
+          "name": "Bridge hardening",
+          "prerelease": false,
+          "published_at": "2026-05-18T18:00:00+08:00",
+          "tag": "v1.2.0"
+        }
+      ]
+    }
+  },
+  "timezone": "Asia/Shanghai",
+  "triggered_at": "2026-05-19T09:03:42+08:00",
+  "window": {
+    "since": "2026-05-18T00:00:00+08:00",
+    "until": "2026-05-19T00:00:00+08:00"
+  }
+}

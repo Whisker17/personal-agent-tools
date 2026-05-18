@@ -1,0 +1,160 @@
+{
+  "coverage": {
+    "actual_days": 2,
+    "coverage_ratio": 0.2857,
+    "expected_days": 7,
+    "gap_filled_dates": [],
+    "loaded_dates": [
+      "2026-05-18",
+      "2026-05-19"
+    ],
+    "missing_dates": [
+      "2026-05-20",
+      "2026-05-21",
+      "2026-05-22",
+      "2026-05-23",
+      "2026-05-24"
+    ]
+  },
+  "errors": [],
+  "period": {
+    "end_date": "2026-05-24",
+    "start_date": "2026-05-18"
+  },
+  "repos": {
+    "owner/repo": {
+      "commits": {
+        "by_module": {
+          "bridge": 8,
+          "core": 3,
+          "docs": 2
+        },
+        "by_type": {
+          "docs": 1,
+          "feature": 2,
+          "fix": 2
+        },
+        "count": 5,
+        "files_changed": 13,
+        "loc_added": 450,
+        "loc_removed": 115
+      },
+      "contributors_active": [
+        "alice",
+        "bob",
+        "carol"
+      ],
+      "contributors_count": 3,
+      "key_prs": [
+        {
+          "additions": null,
+          "author": null,
+          "changed_files": null,
+          "content_signals": {
+            "body_excerpt": "",
+            "changed_files": [],
+            "commit_subjects": [],
+            "modules": [],
+            "summary_basis": []
+          },
+          "current_status": "merged",
+          "deletions": null,
+          "event_types": [
+            "merged"
+          ],
+          "evidence": "0 LOC, 0 files, labels: none",
+          "importance_score": 4000,
+          "labels": [],
+          "number": 10,
+          "review_time_hours": null,
+          "title": null
+        },
+        {
+          "additions": null,
+          "author": null,
+          "changed_files": null,
+          "content_signals": {
+            "body_excerpt": "",
+            "changed_files": [],
+            "commit_subjects": [],
+            "modules": [],
+            "summary_basis": []
+          },
+          "current_status": "merged",
+          "deletions": null,
+          "event_types": [
+            "merged",
+            "opened"
+          ],
+          "evidence": "0 LOC, 0 files, labels: none",
+          "importance_score": 4000,
+          "labels": [],
+          "number": 13,
+          "review_time_hours": null,
+          "title": null
+        },
+        {
+          "additions": null,
+          "author": null,
+          "changed_files": null,
+          "content_signals": {
+            "body_excerpt": "",
+            "changed_files": [],
+            "commit_subjects": [],
+            "modules": [],
+            "summary_basis": []
+          },
+          "current_status": "merged",
+          "deletions": null,
+          "event_types": [
+            "merged"
+          ],
+          "evidence": "0 LOC, 0 files, labels: none",
+          "importance_score": 4000,
+          "labels": [],
+          "number": 11,
+          "review_time_hours": null,
+          "title": null
+        },
+        {
+          "additions": null,
+          "author": null,
+          "changed_files": null,
+          "content_signals": {
+            "body_excerpt": "",
+            "changed_files": [],
+            "commit_subjects": [],
+            "modules": [],
+            "summary_basis": []
+          },
+          "current_status": "open",
+          "deletions": null,
+          "event_types": [
+            "opened"
+          ],
+          "evidence": "0 LOC, 0 files, labels: none",
+          "importance_score": 2500,
+          "labels": [],
+          "number": 12,
+          "review_time_hours": null,
+          "title": null
+        }
+      ],
+      "pr_status_counts": {
+        "closed_unmerged": 0,
+        "draft": 0,
+        "merged": 3,
+        "open": 1
+      },
+      "prs": {
+        "closed_unmerged_count": 0,
+        "merged_count": 3,
+        "opened_count": 2,
+        "updated_open_count": 0
+      },
+      "releases_count": 1
+    }
+  },
+  "timezone": "Asia/Shanghai",
+  "type": "weekly"
+}

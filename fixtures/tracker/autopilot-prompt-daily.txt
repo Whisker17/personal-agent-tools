@@ -1,0 +1,6 @@
+Track repos: owner/repo,example/project
+Report type: daily
+Focus: security,bridge
+Language: zh
+Data repo: Whisker17/counterparty-daily-summary
+Timezone: Asia/Shanghai

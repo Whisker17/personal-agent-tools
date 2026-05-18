@@ -160,6 +160,7 @@ Reusable skills maintained in separate repos. Use when the skill is useful acros
 - **project-planner-agent** - Reads Multica project descriptions and creates structured Milestones + Issues via Multica CLI
 - **project-orchestrator-agent** - Orchestrates end-to-end project execution by dispatching planning, work, and review to specialized agents
 - **technical-writer-agent** - Aggregates completed research sections into the final project report
+- **repo-tracker-agent** - Tracks GitHub repo activity and produces daily, weekly, and monthly competitive intelligence reports via Multica autopilot
 
 ## Skill routing
 
