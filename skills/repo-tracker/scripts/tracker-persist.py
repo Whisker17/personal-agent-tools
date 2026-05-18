@@ -77,15 +77,23 @@ def week_range_for(day):
     return start, end
 
 
+def validate_project(project):
+    safe = project.strip().strip("/")
+    if not safe or ".." in safe:
+        raise ValueError("project must be a valid path (e.g. owner/repo)")
+    parts = safe.split("/")
+    if not all(parts):
+        raise ValueError("project contains empty segments")
+    return safe
+
+
 def report_path(report_type, report_date, project):
     day = date.fromisoformat(report_date)
     week_start, week_end = week_range_for(day)
     year = f"{day.year:04d}"
     month = f"{day.month:02d}"
     week_dir = f"{week_start.day:02d}-{week_end.day:02d}"
-    safe_project = project.strip().strip("/")
-    if not safe_project or ".." in safe_project or "/" in safe_project:
-        raise ValueError("project must be a single safe path segment")
+    safe_project = validate_project(project)
     if report_type == "daily":
         return f"{year}/{month}/{week_dir}/{day.day:02d}/{safe_project}/{year}{month}{day.day:02d}-summary.md"
     if report_type == "weekly":

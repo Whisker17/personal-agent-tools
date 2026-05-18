@@ -126,12 +126,13 @@ def report_path(report_type, report_date, project):
     year = f"{day.year:04d}"
     month = f"{day.month:02d}"
     week_dir = f"{week_start.day:02d}-{week_end.day:02d}"
+    safe_project = project.strip().strip("/")
     if report_type == "daily":
-        return f"{year}/{month}/{week_dir}/{day.day:02d}/{project}/{year}{month}{day.day:02d}-summary.md"
+        return f"{year}/{month}/{week_dir}/{day.day:02d}/{safe_project}/{year}{month}{day.day:02d}-summary.md"
     if report_type == "weekly":
-        return f"{year}/{month}/{week_dir}/weeks-summarys/{project}/{year}{month}-week-summary.md"
+        return f"{year}/{month}/{week_dir}/weeks-summarys/{safe_project}/{year}{month}-week-summary.md"
     if report_type == "monthly":
-        return f"{year}/{month}/months-summarys/{project}/{year}{month}-month-summary.md"
+        return f"{year}/{month}/months-summarys/{safe_project}/{year}{month}-month-summary.md"
     raise ValueError(f"unknown report type: {report_type}")
 
 

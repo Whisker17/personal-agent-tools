@@ -61,7 +61,7 @@ PR event counts are independent. A PR opened and merged in the same natural day 
 2. Run `skills/repo-tracker/scripts/tracker-aggregate.py --data-repo "<Data repo>" --type weekly --end-date "<report_date>" --days 7 --repos "<repos>" --timezone "<Timezone>" --project "{project}" --gap-fill`.
 3. Save stdout JSON to a temporary file.
 4. Generate the weekly report primarily from `daily_summaries`, using aggregate JSON as supporting metrics.
-5. Persist weekly Markdown to the GitHub path containing `weeks-summarys`, for example `2026/05/16-22/weeks-summarys/project-A/202605-week-summary.md`.
+5. Persist weekly Markdown to the GitHub path containing `weeks-summarys`, for example `2026/05/16-22/weeks-summarys/base/base/202605-week-summary.md`.
 6. Emphasize Key PR themes, focus shifts, contributor changes, delivery velocity, releases, and anomalies.
 
 ### Monthly Flow
@@ -70,7 +70,7 @@ PR event counts are independent. A PR opened and merged in the same natural day 
 2. Run `skills/repo-tracker/scripts/tracker-aggregate.py --data-repo "<Data repo>" --type monthly --end-date "<report_date>" --days 30 --repos "<repos>" --timezone "<Timezone>" --project "{project}" --gap-fill`.
 3. Save stdout JSON to a temporary file.
 4. Generate the monthly report primarily from `daily_summaries`, using aggregate JSON as supporting metrics.
-5. Persist monthly Markdown to the GitHub path containing `months-summarys`, for example `2026/05/months-summarys/project-A/202605-month-summary.md`.
+5. Persist monthly Markdown to the GitHub path containing `months-summarys`, for example `2026/05/months-summarys/base/base/202605-month-summary.md`.
 6. If `Self repo` is present, include a competitive comparison section.
 7. Keep roadmap inference tied to evidence and include confidence levels.
 
@@ -118,22 +118,24 @@ The issue body must be Markdown and include:
 
 Persist every report output into the configured GitHub `Data repo`.
 
+The `{project}` segment uses `owner/repo` format (e.g. `base/base`), matching the GitHub repo identifier.
+
 Daily summary path:
 
 ```text
-{YYYY}/{MM}/{week_start_day}-{week_end_day}/{DD}/{project}/{YYYYMMDD}-summary.md
+{YYYY}/{MM}/{week_start_day}-{week_end_day}/{DD}/{owner}/{repo}/{YYYYMMDD}-summary.md
 ```
 
 Weekly summary path:
 
 ```text
-{YYYY}/{MM}/{week_start_day}-{week_end_day}/weeks-summarys/{project}/{YYYYMM}-week-summary.md
+{YYYY}/{MM}/{week_start_day}-{week_end_day}/weeks-summarys/{owner}/{repo}/{YYYYMM}-week-summary.md
 ```
 
 Monthly summary path:
 
 ```text
-{YYYY}/{MM}/months-summarys/{project}/{YYYYMM}-month-summary.md
+{YYYY}/{MM}/months-summarys/{owner}/{repo}/{YYYYMM}-month-summary.md
 ```
 
 Weekly and monthly reports must depend on persisted daily summary Markdown. Use raw daily JSON only as supporting structured evidence.

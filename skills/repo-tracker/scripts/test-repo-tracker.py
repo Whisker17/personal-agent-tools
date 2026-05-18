@@ -239,7 +239,7 @@ def check_aggregate_daily_summary_dependency():
             "--summary-fixture-dir",
             "fixtures/tracker/summary-repo",
             "--project",
-            "project-A",
+            "owner/repo",
         ]
     )
     if result.returncode != 0:
@@ -288,16 +288,16 @@ def check_persist_upsert_dry_run():
 def check_report_path_generation():
     cases = [
         (
-            ["--report-type", "daily", "--date", "2026-05-18", "--project", "project-A"],
-            "2026/05/16-22/18/project-A/20260518-summary.md",
+            ["--report-type", "daily", "--date", "2026-05-18", "--project", "owner/repo"],
+            "2026/05/16-22/18/owner/repo/20260518-summary.md",
         ),
         (
-            ["--report-type", "weekly", "--date", "2026-05-18", "--project", "project-A"],
-            "2026/05/16-22/weeks-summarys/project-A/202605-week-summary.md",
+            ["--report-type", "weekly", "--date", "2026-05-18", "--project", "owner/repo"],
+            "2026/05/16-22/weeks-summarys/owner/repo/202605-week-summary.md",
         ),
         (
-            ["--report-type", "monthly", "--date", "2026-05-18", "--project", "project-A"],
-            "2026/05/months-summarys/project-A/202605-month-summary.md",
+            ["--report-type", "monthly", "--date", "2026-05-18", "--project", "owner/repo"],
+            "2026/05/months-summarys/owner/repo/202605-month-summary.md",
         ),
     ]
     for args, expected in cases:
