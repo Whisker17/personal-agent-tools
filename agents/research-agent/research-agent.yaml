@@ -29,7 +29,7 @@ parameters:
     description: Optional. What form the final deliverable takes. Passed to /research-outline.
   - key: project_slug
     type: text
-    description: Stable project identifier provided by Planner/Orchestrator
+    description: Stable project identifier from pre-planned metadata or Orchestrator
   - key: topic_slug
     type: text
     description: Stable topic identifier (never a Linear issue ID)
@@ -77,7 +77,7 @@ parameters:
     description: Required for TW handoff. Commit URL/SHA of the promoted final section on the work branch.
   - key: main_merge_commit
     type: text
-    description: Required for TW handoff. Commit URL/SHA of Orchestrator's main integration commit containing final.md and _index.md.
+    description: Required for TW handoff. Commit URL/SHA of Orchestrator's main integration commit containing the allowlisted research package and _index.md.
   - key: outline_rounds
     type: text
     description: Required for TW handoff. Total outline rounds completed.

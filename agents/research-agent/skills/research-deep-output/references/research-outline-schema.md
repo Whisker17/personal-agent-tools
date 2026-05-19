@@ -13,8 +13,8 @@ The outline is persisted as a markdown file with YAML frontmatter. The frontmatt
 ```yaml
 # --- Required Metadata ---
 topic: string              # The research question or subject
-project_slug: string       # Stable project identifier (provided by Planner/Orchestrator)
-topic_slug: string         # Stable topic identifier (provided by Planner/Orchestrator, never a Linear issue ID)
+project_slug: string       # Stable project identifier (from pre-planned metadata or Orchestrator)
+topic_slug: string         # Stable topic identifier (from pre-planned metadata or Orchestrator, never a Linear issue ID)
 github_repo: string        # GitHub repo (owner/name) for persistence. Default: Whisker17/multica-research
 round: integer             # Current revision round (starts at 1, incremented by /research-review)
 status: candidate | approved  # candidate until Orchestrator approves

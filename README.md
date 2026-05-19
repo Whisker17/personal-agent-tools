@@ -52,7 +52,7 @@ visibility: private
 
 ## Squads And Autocopilots
 
-- `squads/research-squad/` records the five-agent research squad composition and coordination protocol.
+- `squads/research-squad/` records the four-agent runtime research squad composition and coordination protocol. Project Planner remains a separate pre-planning tool.
 - `autocopilots/repo-tracker/` records the repo-tracker schedule and operations runbook.
 
 These layers reference agents; they do not duplicate agent skills or instructions.

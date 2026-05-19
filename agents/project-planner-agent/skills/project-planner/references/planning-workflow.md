@@ -94,4 +94,4 @@ Include:
 - parallel waves and block graph;
 - TW reserved issue ID;
 - risks and ambiguities;
-- `@Orchestrator`.
+- Orchestrator mention link from `multica agent list` (`[@Orchestrator](mention://agent/{id})`). Never use plain text `@Orchestrator`.

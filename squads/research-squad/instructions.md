@@ -6,7 +6,6 @@ These instructions are injected into the leader agent's (Orchestrator) prompt fo
 
 | Agent | Role | Dispatched by |
 |---|---|---|
-| **Planner** | Creates project structure, assigns topic slugs, creates TW reserved issue | Orchestrator (project mode only) |
 | **Research Agent** | Produces outlines, drafts, and final sections | Orchestrator |
 | **Adversarial Agent** | Reviews outlines and drafts, posts advisory verdicts | Orchestrator |
 | **Technical Writer** | Aggregates final sections into project report | Orchestrator (composable mode only) |
@@ -18,8 +17,8 @@ These instructions are injected into the leader agent's (Orchestrator) prompt fo
 3. **Artifact-before-review.** Adversarial Agent reviews persisted artifacts (committed files on the work branch), never ephemeral chat text or uncommitted content.
 4. **Deterministic branches.** Workers write on `research/{project-slug}/{topic-slug}`. If Multica starts a worker on a random branch, the worker must switch to the deterministic branch before writing.
 5. **Selective main integration.** Never squash-merge whole work branches into `main`; that can copy random runtime files. Integrate only allowlisted accepted artifacts: outline, persisted draft rounds, final section, and `_index.md` when applicable. Push `main`, then delete the work branch.
-6. **Continuous handoff.** Every non-terminal completion message must @-mention the next agent in both `Target agent` and `Next action`. Terminal messages (closing comments, BLOCKED states) use `Target agent: none`.
-7. **Slug discipline.** Planner output must use lowercase hyphenated `project_slug` and `topic_slug` values; invalid slugs block branch creation.
+6. **Continuous handoff.** Every non-terminal completion message must include the target agent's full mention link `[@AgentName](mention://agent/{uuid})` from the current Agent Roster in both `Target agent` and `Next action`. Plain text `@AgentName` silently fails to trigger. Terminal messages (closing comments, BLOCKED states) use `Target agent: none`.
+7. **Slug discipline.** Pre-planned project metadata must use lowercase hyphenated `project_slug` and `topic_slug` values; invalid slugs block branch creation.
 8. **Read-only review.** Adversarial Agent reads persisted artifacts from the specified branch commit and never writes research artifacts.
 
 ## Quality Gates
@@ -31,8 +30,8 @@ These instructions are injected into the leader agent's (Orchestrator) prompt fo
 
 ## Mode-Specific Reminders
 
-- **Project mode**: use Planner for structure; full Done Gate (13 items); `_index.md` required.
-- **Composable single-issue**: skip Planner; full Done Gate (13 items); `_index.md` required; Research Complete posted to TW issue.
+- **Project mode**: consume pre-planned research issues and TW reserved issue metadata; full Done Gate (13 items); `_index.md` required.
+- **Composable single-issue**: full Done Gate (13 items); `_index.md` required; Research Complete posted to TW issue.
 - **Lightweight single-issue**: skip Planner; lightweight Done Gate (10 items); no `_index.md`; no TW handoff; your closing comment is terminal.
 
 ## Communication Standard

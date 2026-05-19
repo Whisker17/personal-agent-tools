@@ -1,8 +1,7 @@
 name: research-squad
-description: Five-agent research squad for systematic crypto and DeFi research.
+description: Four-agent runtime research squad for systematic crypto and DeFi research. Project Planner remains a separate pre-planning tool.
 members:
   orchestrator: agents/project-orchestrator-agent
-  planner: agents/project-planner-agent
   researcher: agents/research-agent
   adversarial: agents/research-adversarial-agent
   writer: agents/technical-writer-agent

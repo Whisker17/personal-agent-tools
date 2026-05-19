@@ -147,8 +147,8 @@ agent_role: research-agent
 |-------|-----------|-----------------|------------|--------------|--------|
 | 1 | paladin-architecture | MULTICA-44 | paladin-mantle-integration/research-sections/paladin-architecture/final.md | - | done |
 
-**Target agent**: @Orchestrator
-**Next action**: Validate proposal, integrate allowlisted research package (outline, draft rounds, final) and _index.md to main, delete branch, then dispatch TW handoff
+**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster})
+**Next action**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster}) validate proposal, integrate allowlisted research package (outline, draft rounds, final) and _index.md to main, delete branch, then dispatch TW handoff
 
 ## TW Research Complete Format
 
@@ -172,7 +172,7 @@ agent_role: research-agent
 - 三大隐私域通过 Pluggable Domain 接口实现可扩展性
 - UTXO 状态模型是并发隐私交易的核心基础
 
-@Orchestrator
+[@Orchestrator](mention://agent/{orchestrator-id-from-roster})
 ```
 
 ## Example 3: Parallel Waves Output
@@ -278,8 +278,8 @@ Each Research Agent completion posts a comment on this issue in this format:
 **Diagram assets branch commit/URL**: {commit hash or permalink}
 **Source sections aggregated**: MULTICA-44, MULTICA-45, MULTICA-46, MULTICA-47, MULTICA-48, MULTICA-49, MULTICA-50, MULTICA-51
 **Sections index**: paladin-mantle-integration/research-sections/_index.md
-**Target agent**: @Orchestrator
-**Next action**: Integrate final report to main, delete branch, verify, and close project
+**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster})
+**Next action**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster}) integrate final report to main, delete branch, verify, and close project
 
 ## Orchestrator-Only Dispatch Note
 
@@ -360,7 +360,7 @@ Wave 4 (1 issue): #8 final-recommendation
 - Paladin 本地环境搭建可能需要特定版本的 Go 和 Node.js，需要验证环境依赖
 - 如果 Paladin 文档不完整，UTXO 模型分析可能需要深入源码阅读
 
-@Orchestrator
+[@Orchestrator](mention://agent/{orchestrator-id-from-roster})
 ```
 
 ## Example 6: Dependency Graph (Engineering Project — Legacy Reference)

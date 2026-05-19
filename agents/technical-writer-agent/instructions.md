@@ -16,6 +16,12 @@ You do not perform new research, reopen research issues, review research quality
 
 Use `technical-writer-reporting` for all validation, synthesis, diagram handling, persistence, and completion-comment details.
 
+## Mention Link Handoff
+
+Every completion comment (Final Report Ready) must use the full mention link format `[@Orchestrator](mention://agent/{uuid})` in `Target agent` and `Next action` fields, copied from the Agent Roster in the Orchestrator's Dispatch comment. Plain text `@Orchestrator` silently fails to trigger the next agent.
+
+Before posting Final Report Ready, verify the comment body contains `mention://agent/`. If it does not, correct the mention before posting. If the Dispatch did not include a roster, post `BLOCKED: missing agent roster` instead of guessing a UUID.
+
 ## Boundaries
 
 - Never synthesize until the skill's upstream completion checks pass.

@@ -23,12 +23,21 @@ Mode is determined by parameter combination (mutually exclusive):
 
 | Agent | Responsibility |
 |---|---|
-| `project-planner-agent` | Issue design, dependency graph, slugs, artifact paths, TW reserved issue |
 | `research-agent` | Outline, draft, final promotion, TW handoff |
 | `research-adversarial-agent` | Outline and draft review |
 | `technical-writer-agent` | Final report aggregation |
 
 Research Agent and Adversarial Agent never communicate directly; Orchestrator relays all feedback.
+
+### Roster Fetch and Canonical Mention Links
+
+Before each Dispatch comment, Orchestrator must:
+
+1. Run `multica agent list --output json` to obtain each agent's current `{name, id}`.
+2. Build a canonical mention map: `[@AgentName](mention://agent/{id})` for each squad agent.
+3. Include the mention map as an **Agent Roster** block in every Dispatch comment so that Workers can copy the exact links for their handoff messages.
+
+Refresh the roster before each Dispatch, not just at pipeline start. Agents may be redeployed mid-pipeline, making cached UUIDs stale. Never hardcode agent UUIDs.
 
 ## Preflight
 
@@ -76,11 +85,12 @@ Valid phases are defined in `squad-communication-protocol.md`.
 
 1. Resolve anchor issue.
 2. Run preflight and post results.
-3. Dispatch Planner.
+3. Load the pre-planned project issue set and TW reserved issue metadata.
 4. Validate plan quality:
    - every research issue has scope, expected output, slugs, order, artifact paths, diagram expectations when relevant, dependencies, and handoff formats;
    - dependencies form a DAG;
    - TW reserved issue exists and references all research issues.
+   If any required pre-planned input is missing or incomplete, post `BLOCKED` with the missing prerequisites. Do not dispatch Planner from inside the runtime squad and do not invent project structure.
 5. Initialize ledger.
 6. Dispatch up to 5 unblocked research issues.
 7. For each issue:
@@ -155,10 +165,6 @@ If an integration attempt is interrupted or leaves a dirty checkout, the next re
 
 ## Dispatch Parameters
 
-### Planner
-
-Required: `project_id`, `project_description`, `github_repo`, `orchestrator_context`, `research_depth`, optional `project_slug`.
-
 ### Research Outline
 
 Required: `multica_issue_id`, `topic`, `scope`, `expected_output`, `project_slug`, `topic_slug`, `report_issue_id`, `github_repo`, `round`, `branch_name`, `base_commit`.
@@ -199,7 +205,7 @@ Required: `project_id`, `report_issue_id`, `project_slug`, `github_repo`.
 
 Only Orchestrator writes `{project_slug}/research-sections/_index.md`.
 
-Validate each Index Entry Proposal against the ledger and Planner-assigned `order`. During selective main integration, read the latest `_index.md` from `origin/main`, rewrite the full table sorted by `order`, and commit the allowlisted research package plus `_index.md` together in one main integration commit. Record that commit in `main_merge_commit`, set `main_index_committed=true`, record `integrated_paths`, then delete the work branch and dispatch TW handoff.
+Validate each Index Entry Proposal against the ledger and pre-planned `order`. During selective main integration, read the latest `_index.md` from `origin/main`, rewrite the full table sorted by `order`, and commit the allowlisted research package plus `_index.md` together in one main integration commit. Record that commit in `main_merge_commit`, set `main_index_committed=true`, record `integrated_paths`, then delete the work branch and dispatch TW handoff.
 
 ## Done Gates
 
@@ -292,12 +298,12 @@ When `single_issue_id` is present, follow this flow instead of the full project 
 
 ### Handoff Rules
 
-- **Continuous tasks** (handoff required): completion messages must explicitly @-mention the next agent in both `Target agent` and `Next action` fields.
-- **Terminal tasks** (stoppable): closing comments, BLOCKED messages, and awaiting-human-input states do not require @-mentioning a next agent. Use `Target agent: none` / `Next action: none` or `Next action: awaiting human input`.
+- **Continuous tasks** (handoff required): completion messages must include the target agent's full mention link (from the Agent Roster) in both `Target agent` and `Next action` fields. Plain text `@AgentName` does not trigger a Multica task. The required format is `[@AgentName](mention://agent/{uuid})`.
+- **Terminal tasks** (stoppable): closing comments, BLOCKED messages, and awaiting-human-input states do not require a mention link. Use `Target agent: none` / `Next action: none` or `Next action: awaiting human input`.
 
 ### Issue Information Extraction
 
-In single-issue mode, extract from the issue (not from Planner output):
+In single-issue mode, extract from the issue:
 
 | Field | Source |
 |---|---|

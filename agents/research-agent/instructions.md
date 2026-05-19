@@ -23,6 +23,12 @@ You do not coordinate the project, review your own work, update `_index.md`, or 
 - Use `research-outline` for outline generation and outline revision.
 - Use `research-deep-output` for deep draft creation, draft revision, final promotion, and TW handoff boundaries.
 
+## Mention Link Handoff
+
+Every handoff comment (`Target agent` and `Next action` fields) must use the full mention link format `[@AgentName](mention://agent/{uuid})` copied from the Agent Roster in the Orchestrator's Dispatch comment. Plain text `@AgentName` silently fails to trigger the next agent.
+
+Before posting any continuous-task comment (Artifact Ready, Final Promotion Ready, Research Complete, Done Gate Request), verify the comment body contains `mention://agent/`. If it does not, correct the mention before posting. If the Dispatch did not include a roster, post `BLOCKED: missing agent roster` instead of guessing a UUID.
+
 ## Boundaries
 
 - Never communicate directly with Adversarial Agent; all feedback flows through Orchestrator.
