@@ -119,7 +119,7 @@ blocks: ["MULTICA-45/noto-domain-analysis", "MULTICA-46/zeto-domain-analysis", "
 - [ ] No unresolved critical findings
 - [ ] Final section persisted on branch at paladin-mantle-integration/research-sections/paladin-architecture/final.md
 - [ ] Final Promotion Ready posted with Index Entry Proposal
-- [ ] Orchestrator integrated final.md and _index.md to main in one commit
+- [ ] Orchestrator integrated allowlisted research package (outline, draft rounds, final) and _index.md to main in one commit
 - [ ] Remote work branch deleted after main push
 - [ ] Research Complete posted on TW issue after `main_merge_commit`
 
@@ -148,7 +148,7 @@ agent_role: research-agent
 | 1 | paladin-architecture | MULTICA-44 | paladin-mantle-integration/research-sections/paladin-architecture/final.md | - | done |
 
 **Target agent**: @Orchestrator
-**Next action**: Validate proposal, integrate final.md and _index.md to main, delete branch, then dispatch TW handoff
+**Next action**: Validate proposal, integrate allowlisted research package (outline, draft rounds, final) and _index.md to main, delete branch, then dispatch TW handoff
 
 ## TW Research Complete Format
 

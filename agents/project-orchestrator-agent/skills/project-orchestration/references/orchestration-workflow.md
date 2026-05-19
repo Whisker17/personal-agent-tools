@@ -63,8 +63,9 @@ Required row fields:
 | `assigned_agent` | Current agent or `none` |
 | `branch_name`, `base_commit`, `branch_head_commit` | Work branch identity and latest branch state |
 | `outline_path`, `draft_artifact_path`, `final_artifact_path` | Artifact paths |
-| `outline_branch_commit`, `draft_branch_commit`, `final_branch_commit` | Work branch commit references |
-| `main_merge_commit`, `main_index_committed`, `branch_deleted` | Main integration and cleanup status |
+| `outline_branch_commit`, `draft_branch_commits`, `final_branch_commit` | Work branch commit references; drafts are an ordered list by round |
+| `approved_draft_round`, `approved_draft_commit` | Draft selected for final promotion |
+| `merge_ready_at`, `main_merge_commit`, `main_index_committed`, `integrated_paths`, `branch_deleted_at` | Main integration and cleanup status |
 | `index_entry_proposal` | Index entry to write during merge-time integration |
 | `tw_handoff_comment` | Research Complete comment URL |
 | `next_action`, `updated_at` | Resume information |
@@ -117,28 +118,40 @@ If Multica creates a random runtime branch, the worker must switch to the determ
 
 At the start of outline work, the Research Agent must fetch latest `main`, create or switch to `branch_name`, and push the branch before persisting artifacts. The default `branch_name` is `research/{project_slug}/{topic_slug}`. The ledger records `base_commit` from `origin/main` and every branch commit returned by workers.
 
+Workers may start inside a Multica-created random worktree branch. In that case, they must not commit artifacts on that runtime branch. Required setup:
+
+1. `git fetch origin main`.
+2. If `origin/{branch_name}` exists, switch to a local branch tracking it.
+3. If it does not exist, create `branch_name` from `base_commit` when provided, otherwise from `origin/main`.
+4. Push with upstream tracking: `git push -u origin {branch_name}`.
+5. Verify the current branch equals `branch_name` before every artifact write.
+
 ### Main Integration
 
-Main must contain only accepted final outputs. Do not `git merge --squash` the whole work branch, because that would bring outlines and drafts into `main`.
+Main must contain accepted research packages, not raw work branches. Do not `git merge --squash` the whole work branch, because that can copy random runtime files into `main`. Do not integrate only `final.md`, because that drops the accepted outline and draft history required for traceability.
 
-For a research issue, Orchestrator performs a selective squash integration:
+For a research issue, Orchestrator performs selective artifact integration from an allowlist:
 
 1. Fetch latest `origin/main` and the work branch.
-2. Start from latest `main`.
-3. Restore only the accepted final section from the work branch:
-   `{project_slug}/research-sections/{topic_slug}/final.md`.
+2. Start from latest `origin/main` in a clean integration checkout.
+3. Restore only allowlisted research artifacts from the work branch:
+   - `{project_slug}/outlines/{topic_slug}.md`
+   - `{project_slug}/research-sections/{topic_slug}/drafts/round-*.md`
+   - `{project_slug}/research-sections/{topic_slug}/final.md`
 4. In project/composable mode, rewrite `{project_slug}/research-sections/_index.md` on latest `main` in the same pending change.
 5. Commit one main integration commit:
-   `final({topic_slug}): {one-line summary} ({multica_issue_id})`.
+   `research({topic_slug}): integrate accepted research package ({multica_issue_id})`.
 6. Push `main`.
 7. Delete the remote work branch.
-8. Record `main_merge_commit`, `main_index_committed`, and `branch_deleted` in the ledger.
+8. Record `main_merge_commit`, `main_index_committed`, `integrated_paths`, and `branch_deleted_at` in the ledger.
 
 For Technical Writer output, Orchestrator applies the same selective integration pattern for `{project_slug}/report/final-report.md` and `{project_slug}/report/assets/`, with commit message:
 
-`report({project_slug}): final research report ({multica_issue_id})`
+`docs({project_slug}): integrate final research report ({multica_issue_id})`
 
 Work branch commits remain valid traceability for drafts and review history. Done Gates and Technical Writer aggregation must use main integration commits as the accepted final evidence.
+
+If an integration attempt is interrupted or leaves a dirty checkout, the next retry must discard that local integration state, refetch `origin/main`, and restore the allowlisted paths again. Never force-push `main`.
 
 ## Dispatch Parameters
 
@@ -148,7 +161,7 @@ Required: `project_id`, `project_description`, `github_repo`, `orchestrator_cont
 
 ### Research Outline
 
-Required: `multica_issue_id`, `topic`, `scope`, `expected_output`, `project_slug`, `topic_slug`, `report_issue_id`, `github_repo`, `round`, `branch_name`.
+Required: `multica_issue_id`, `topic`, `scope`, `expected_output`, `project_slug`, `topic_slug`, `report_issue_id`, `github_repo`, `round`, `branch_name`, `base_commit`.
 
 ### Outline Review
 
@@ -186,7 +199,7 @@ Required: `project_id`, `report_issue_id`, `project_slug`, `github_repo`.
 
 Only Orchestrator writes `{project_slug}/research-sections/_index.md`.
 
-Validate each Index Entry Proposal against the ledger and Planner-assigned `order`. During the selective main merge, read the latest `_index.md` from `origin/main`, rewrite the full table sorted by `order`, and commit the final section plus `_index.md` together in one main integration commit. Record that commit in `main_merge_commit`, set `main_index_committed=true`, then delete the work branch and dispatch TW handoff.
+Validate each Index Entry Proposal against the ledger and Planner-assigned `order`. During selective main integration, read the latest `_index.md` from `origin/main`, rewrite the full table sorted by `order`, and commit the allowlisted research package plus `_index.md` together in one main integration commit. Record that commit in `main_merge_commit`, set `main_index_committed=true`, record `integrated_paths`, then delete the work branch and dispatch TW handoff.
 
 ## Done Gates
 
@@ -200,7 +213,7 @@ Research issue Done requires all 13 items:
 4. Adversarial approve or Orchestrator accept-risk.
 5. No unresolved critical finding.
 6. Final section persisted on the work branch at `{project_slug}/research-sections/{topic_slug}/final.md`.
-7. Main integration commit recorded and includes the final section.
+7. Main integration commit recorded and includes the accepted outline, persisted draft rounds, and final section.
 8. `_index.md` entry written in the same main integration commit.
 9. Remote work branch deleted after main push.
 10. Research Complete posted to TW reserved issue with `main_merge_commit`.
@@ -219,13 +232,23 @@ Research issue Done requires all 10 items:
 5. No unresolved critical finding.
 6. Final section persisted on the work branch at `{project_slug}/research-sections/{topic_slug}/final.md`.
 7. Final Promotion Ready posted on research issue with final section path and branch commit; Index Entry Proposal is not required.
-8. Main integration commit recorded and includes the final section.
+8. Main integration commit recorded and includes the accepted outline, persisted draft rounds, and final section.
 9. Remote work branch deleted after main push.
 10. Orchestrator posted closing comment on research issue.
 
 ### TW Done
 
-TW Done requires final report, source traceability, completion comment, review gate index, unresolved risk summary, and diagram assets when present.
+TW Done requires:
+
+1. Final report persisted on the TW work branch at `{project_slug}/report/final-report.md`.
+2. Source traceability: all aggregated research sections referenced with `main_merge_commit` URLs.
+3. Final Report Ready posted on TW issue with branch commit.
+4. Orchestrator integrated allowlisted TW artifacts (final report and assets) to `main` and recorded `main_merge_commit`.
+5. Remote TW work branch deleted after main push; `branch_deleted_at` recorded.
+6. Review gate index: all research issues Done.
+7. Unresolved risk summary included when accept-risk decisions exist.
+8. Diagram assets present when referenced.
+9. Orchestrator posted closing comment on TW issue with `main_merge_commit`, integrated paths, and project summary.
 
 ## Risk Policy
 
@@ -253,7 +276,7 @@ When `single_issue_id` is present, follow this flow instead of the full project 
 
 ### Lightweight Path (no `report_issue_id`)
 
-10. After Final Promotion Ready, selectively integrate `final.md` to latest `main`, push, and delete the work branch.
+10. After Final Promotion Ready, selectively integrate the allowlisted research package to latest `main`, push, and delete the work branch.
 11. Run 10-item Done Gate.
 12. Post closing comment on research issue. This is a terminal action — no @-mention of next agent required.
 13. Mark issue Done.
@@ -261,7 +284,7 @@ When `single_issue_id` is present, follow this flow instead of the full project 
 ### Composable Path (with `report_issue_id`)
 
 10. After Final Promotion Ready, validate Index Entry Proposal. Determine `order` by reading existing `_index.md` from latest `main` and taking max(order) + 1.
-11. Selectively integrate `final.md` and the rewritten `_index.md` to latest `main` in one commit, push, and delete the work branch.
+11. Selectively integrate the allowlisted research package and the rewritten `_index.md` to latest `main` in one commit, push, and delete the work branch.
 12. Dispatch TW handoff — Research Agent posts Research Complete on TW reserved issue using `main_merge_commit`.
 13. Run 13-item Done Gate.
 14. Post closing comment on research issue. This is a terminal action — no @-mention required unless user requests TW aggregation.

@@ -36,6 +36,9 @@ parameters:
   - key: branch_name
     type: text
     description: Optional deterministic work branch. Defaults to research/{project_slug}/{topic_slug}. Research artifacts must be written here, not on random runtime branches.
+  - key: base_commit
+    type: text
+    description: Optional. The origin/main SHA to create a new branch from. Orchestrator computes this at first outline dispatch. When absent, worker falls back to latest origin/main.
   - key: report_issue_id
     type: text
     description: Optional. TW reserved issue ID for posting completion summaries. Required in squad mode.

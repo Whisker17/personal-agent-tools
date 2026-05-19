@@ -48,7 +48,7 @@ Use `diagram-upgrade-guide.md` for decisions.
 
 Do not write elsewhere.
 
-Write outputs on `branch_name`, not directly on `main`. If the branch does not exist, create it from latest `origin/main` and push it. The Orchestrator later selectively integrates the final report and assets to `main`, records the main integration commit, and deletes `branch_name`.
+Write outputs on `branch_name`, not directly on `main`. If the branch does not exist, create it from latest `origin/main` and push it with upstream tracking: `git push -u origin {branch_name}`. If Multica starts the runtime on a random branch, switch to `branch_name` before writing. The Orchestrator later selectively integrates the final report and assets to `main`, records the main integration commit, and deletes `branch_name`.
 
 ## Final Report Structure
 

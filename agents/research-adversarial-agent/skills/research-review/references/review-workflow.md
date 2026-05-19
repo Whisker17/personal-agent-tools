@@ -5,6 +5,10 @@
 - `review_type=outline`: use structured outline review and patch proposal.
 - `review_type=draft`: review the persisted draft at the specified path and commit.
 
+## Branch and Artifact Access
+
+This agent is read-only. Fetch the specified `artifact_commit` from `github_repo` and review the artifact at `artifact_path`; do not create branches, switch work branches for writes, or persist revised research artifacts. If the referenced commit or path is unreadable, report `BLOCKED` to Orchestrator.
+
 ## Outline Review
 
 Use `research-outline-schema.md` to validate structure.

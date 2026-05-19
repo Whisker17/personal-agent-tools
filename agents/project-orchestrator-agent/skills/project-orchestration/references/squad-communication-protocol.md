@@ -2,7 +2,7 @@
 
 > **Document type**: Human reference. This file is not read by agents at runtime. Each agent prompt embeds its own role-specific subset of this protocol.
 >
-> **Last updated**: 2026-05-16
+> **Last updated**: 2026-05-19
 
 ## 1. Scope and Runtime Boundary
 
@@ -64,7 +64,7 @@ Research issue branches use `research/{project-slug}/{topic-slug}`. Technical Wr
 
 Worker agents write outlines, drafts, final sections, and final reports only on their deterministic work branch. If Multica starts the runtime on a random branch, the worker must switch to the deterministic branch before writing.
 
-`main` contains accepted final outputs only. Orchestrator does not squash merge whole work branches, because that would copy outlines and drafts into `main`. Instead, Orchestrator selectively integrates accepted final files from the work branch into latest `main`, writes `_index.md` in the same integration commit when needed, pushes `main`, then deletes the work branch.
+`main` contains accepted research packages only. Orchestrator does not squash merge whole work branches, because that could copy random runtime files into `main`. Instead, Orchestrator selectively integrates allowlisted artifacts from the work branch into latest `main`: approved outline, persisted draft rounds, final section, and `_index.md` when needed. It then pushes `main` and deletes the work branch.
 
 ## 3. Communication Channels
 
@@ -104,6 +104,7 @@ planned
   -> approved-for-final
   -> final-promotion-in-progress
   -> final-promotion-ready
+  -> merge-ready
   -> main-merge-in-progress
   -> main-merged
   -> branch-deleted
@@ -127,13 +128,14 @@ planned
   -> approved-for-final
   -> final-promotion-in-progress
   -> final-promotion-ready
+  -> merge-ready
   -> main-merge-in-progress
   -> main-merged
   -> branch-deleted
   -> done
 ```
 
-In lightweight mode, the `tw-handoff-*` and `reported-to-TW` states are skipped. After `final-promotion-ready`, Orchestrator selectively integrates `final.md` to `main`, deletes the work branch, runs the lightweight Done Gate, and transitions to `done`.
+In lightweight mode, the `tw-handoff-*` and `reported-to-TW` states are skipped. After `final-promotion-ready`, Orchestrator selectively integrates the allowlisted research package (outline, persisted draft rounds, and final section) to `main`, deletes the work branch, runs the lightweight Done Gate, and transitions to `done`.
 
 ### State Ownership Table
 
@@ -152,8 +154,9 @@ In lightweight mode, the `tw-handoff-*` and `reported-to-TW` states are skipped.
 | `approved-for-final` / accept-risk / revise | Orchestrator | Advisory verdict handled; critical cannot pass |
 | `final-promotion-in-progress` | Research Agent | Writing `final.md` from approved draft |
 | `final-promotion-ready` (Final Promotion Ready) | Research Agent | Final section persisted on work branch; Index Entry Proposal posted when applicable |
+| `merge-ready` | Orchestrator | Quality gates passed and allowlisted integration paths validated |
 | `main-merge-in-progress` | Orchestrator | Final branch commit and proposal validated against run ledger |
-| `main-merged` | Orchestrator | Accepted final file and optional `_index.md` written to `main` in one integration commit |
+| `main-merged` | Orchestrator | Allowlisted research package and optional `_index.md` written to `main` in one integration commit |
 | `branch-deleted` | Orchestrator | Remote work branch deleted after `main` push |
 | `tw-handoff-in-progress` | Research Agent | Posting Research Complete on TW reserved issue |
 | `reported-to-TW` | Research Agent | Orchestrator supplied main integration commit URL/SHA; Research Complete posted and Done Gate requested |
@@ -173,7 +176,7 @@ A research issue may transition to `done` only when **all** of the following are
 4. Adversarial Agent has posted approval, or Orchestrator posted explicit `accept-risk` for a major finding.
 5. No unresolved critical finding remains.
 6. Final section exists on the work branch at `{project-slug}/research-sections/{topic-slug}/final.md`.
-7. Orchestrator wrote the accepted final section to `main` and recorded `main_merge_commit`.
+7. Orchestrator wrote the accepted outline, persisted draft rounds, and final section to `main`, and recorded `main_merge_commit`.
 8. Orchestrator wrote the Index Entry Proposal into `{project-slug}/research-sections/_index.md` in the same `main_merge_commit`.
 9. Orchestrator deleted the remote work branch after `main` push.
 10. Research Agent posted Research Complete on the TW reserved issue after main integration, including: reviewed draft path, final section path, final branch commit, `main_merge_commit`, and approval/accept-risk link.
@@ -192,7 +195,7 @@ A research issue may transition to `done` only when **all** of the following are
 5. No unresolved critical finding remains.
 6. Final section persisted on the work branch at `{project-slug}/research-sections/{topic-slug}/final.md`.
 7. Final Promotion Ready posted on research issue with final section path and branch commit; Index Entry Proposal is not required.
-8. Orchestrator wrote the accepted final section to `main` and recorded `main_merge_commit`.
+8. Orchestrator wrote the accepted outline, persisted draft rounds, and final section to `main`, and recorded `main_merge_commit`.
 9. Orchestrator deleted the remote work branch after `main` push.
 10. Orchestrator posted closing comment on research issue.
 
@@ -217,7 +220,7 @@ All agents must follow these rules when posting completion messages:
 - **Continuous tasks** (handoff required): when the current phase requires another agent or Orchestrator to continue, the completion message must explicitly @-mention the next agent in both `Target agent` and `Next action` fields. Writing only a role name or a vague next action is not sufficient.
 - **Terminal tasks** (stoppable): closing comments, BLOCKED messages awaiting human intervention, and final pipeline endpoints do not require @-mentioning a next agent. Use `Target agent: none` and `Next action: none` or `Next action: awaiting human input`.
 - In composable/project mode, the relay chain is: Final Promotion Ready → `@Orchestrator`, Research Complete → `@TechnicalWriter`, Done Gate Request → `@Orchestrator`, Final Report Ready → `@Orchestrator`.
-- In lightweight single-issue mode, Final Promotion Ready is still a continuous task: `Target agent: @Orchestrator`, `Next action: @Orchestrator integrate final.md to main, delete branch, run lightweight Done Gate, and close research issue`. The Orchestrator closing comment is terminal.
+- In lightweight single-issue mode, Final Promotion Ready is still a continuous task: `Target agent: @Orchestrator`, `Next action: @Orchestrator integrate allowlisted research package to main, delete branch, run lightweight Done Gate, and close research issue`. The Orchestrator closing comment is terminal.
 
 ### 8.1 Dispatch
 
@@ -336,7 +339,7 @@ All agents must follow these rules when posting completion messages:
 | {order} | {topic-slug} | {multica_issue_id} | {project-slug}/research-sections/{topic-slug}/final.md | {upstream-slugs or -} | done |
 
 **Target agent**: @Orchestrator
-**Next action**: Validate proposal, integrate final.md and `_index.md` to main, delete branch, then dispatch TW handoff
+**Next action**: Validate proposal, integrate allowlisted research package (outline, draft rounds, final) and `_index.md` to main, delete branch, then dispatch TW handoff
 ```
 
 #### 8.6.1 Final Promotion Ready (Lightweight — no `report_issue_id`)
@@ -357,7 +360,7 @@ All agents must follow these rules when posting completion messages:
 **Adversarial approval or accept-risk**: {link}
 
 **Target agent**: @Orchestrator
-**Next action**: @Orchestrator integrate final.md to main, delete branch, run lightweight Done Gate, and close research issue
+**Next action**: @Orchestrator integrate allowlisted research package to main, delete branch, run lightweight Done Gate, and close research issue
 ```
 
 The lightweight variant omits the Index Entry Proposal table. It is still a continuous task requiring explicit @Orchestrator handoff.
@@ -444,7 +447,7 @@ Done Gate Request is posted on the **research issue** after Research Complete is
 **Source sections aggregated**: {list of multica_issue_ids}
 **Sections index**: {project-slug}/research-sections/_index.md
 **Target agent**: @Orchestrator
-**Next action**: Integrate final report to main, delete branch, verify, and close project
+**Next action**: Integrate allowlisted TW artifacts (final report and assets) to main, delete branch, record main_merge_commit, verify, and close project
 ```
 
 ## 9. Two-Phase Adversarial Loop
@@ -474,13 +477,13 @@ Done Gate Request is posted on the **research issue** after Research Complete is
 #### Composable / Project Mode (with `report_issue_id`)
 
 1. After approve or accept-risk, Research Agent writes `final.md` on the work branch and posts **Final Promotion Ready** with Index Entry Proposal.
-2. Orchestrator validates the proposal against the run ledger, reads latest `main`, selectively integrates `final.md` and `_index.md` in one main commit, pushes `main`, then deletes the work branch.
+2. Orchestrator validates the proposal against the run ledger, reads latest `main`, selectively integrates the allowlisted research package (outline, persisted draft rounds, final section) and `_index.md` in one main commit, pushes `main`, then deletes the work branch.
 3. Research Agent posts **Research Complete** on the TW reserved issue, including the `main_merge_commit`, then posts **Done Gate Request** on the research issue.
 
 #### Lightweight Single-Issue Mode (no `report_issue_id`)
 
 1. After approve or accept-risk, Research Agent writes `final.md` on the work branch and posts **Final Promotion Ready** (lightweight variant, no Index Entry Proposal).
-2. Orchestrator selectively integrates `final.md` to `main`, pushes `main`, deletes the work branch, runs the lightweight Done Gate (10 items), and posts a closing comment on the research issue.
+2. Orchestrator selectively integrates the allowlisted research package (outline, persisted draft rounds, final section) to `main`, pushes `main`, deletes the work branch, runs the lightweight Done Gate (10 items), and posts a closing comment on the research issue.
 3. Research Agent does not post Research Complete or Done Gate Request. The pipeline ends at the Orchestrator closing comment.
 
 ## 10. Max-Round and Risk Escalation Policy
@@ -592,5 +595,5 @@ If `{project_slug}/research-sections/{topic_slug}/final.md` already exists:
 
 - Continuous tasks: completion messages must @-mention the next agent in both `Target agent` and `Next action`.
 - Terminal tasks: closing comments and BLOCKED states use `Target agent: none` / `Next action: none` or `Next action: awaiting human input`.
-- Lightweight Final Promotion Ready is continuous: `Target agent: @Orchestrator`, `Next action: @Orchestrator integrate final.md to main, delete branch, run lightweight Done Gate, and close research issue`.
+- Lightweight Final Promotion Ready is continuous: `Target agent: @Orchestrator`, `Next action: @Orchestrator integrate allowlisted research package to main, delete branch, run lightweight Done Gate, and close research issue`.
 - Orchestrator closing comment is terminal.

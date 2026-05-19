@@ -31,6 +31,9 @@ parameters:
   - key: topic_slug
     type: text
     description: Stable topic identifier (never a Linear issue ID)
+  - key: branch_name
+    type: text
+    description: Optional deterministic work branch for context. Reviews are read-only and must use artifact_commit as the source of truth.
   - key: github_repo
     type: text
     description: Optional. GitHub repo (owner/name). Default Whisker17/multica-research

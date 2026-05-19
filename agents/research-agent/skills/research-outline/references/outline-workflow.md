@@ -53,7 +53,15 @@ Define minimum source types and counts. Prefer primary sources and include speci
 
 ## Persistence
 
-Before writing, fetch the target repo and switch to `branch_name`. If the branch does not exist, create it from latest `origin/main` and push it. If the runtime starts on a random agent branch, do not write artifacts there; switch to `branch_name` first.
+Before writing, fetch the target repo and switch to `branch_name`. If the branch does not exist, create it from `base_commit` when provided, otherwise from latest `origin/main`, then push with upstream tracking. If the runtime starts on a random agent branch, do not write artifacts there; switch to `branch_name` first.
+
+Required branch setup:
+
+1. Fetch `origin/main` and `origin/{branch_name}` when it exists.
+2. If `branch_name` exists remotely, switch to a local branch tracking it.
+3. If it does not exist remotely, create it from `base_commit` or `origin/main`.
+4. Push new branches with upstream tracking: `git push -u origin {branch_name}`.
+5. Confirm the current branch equals `branch_name` before writing.
 
 Read `research-outline-schema.md`, assemble frontmatter and body, then persist to:
 

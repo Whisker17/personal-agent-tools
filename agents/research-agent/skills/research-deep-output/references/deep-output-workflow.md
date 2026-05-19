@@ -6,7 +6,7 @@
 - Revision: `adversarial_feedback` present.
 - Final promotion: `promote: true`.
 
-All modes write to `branch_name`, default `research/{project_slug}/{topic_slug}`. If the runtime starts on any other branch, switch to `branch_name` before reading or writing artifacts.
+All modes write to `branch_name`, default `research/{project_slug}/{topic_slug}`. If the runtime starts on any other branch, switch to `branch_name` before reading or writing artifacts. New deterministic branches must be pushed with upstream tracking: `git push -u origin {branch_name}`.
 
 ## Load and Validate Outline
 
@@ -49,7 +49,7 @@ Body sections:
 
 ## Persistence
 
-Before writing, fetch the target repo and switch to `branch_name`. If the branch does not exist, create it from latest `origin/main` and push it.
+Before writing, fetch the target repo and switch to `branch_name`. If the branch does not exist, create it from `base_commit` when provided, otherwise from latest `origin/main`, then push with upstream tracking. Confirm the current branch equals `branch_name` before writing.
 
 Persist every draft before adversarial review:
 
@@ -92,7 +92,7 @@ Fetch the approved draft, verify the commit, write:
 
 `{project_slug}/research-sections/{topic_slug}/final.md`
 
-Commit and push to `branch_name`. Return final path, final branch commit, reviewed draft identity, and approval evidence. The Final Promotion Ready message must include `Target agent: @Orchestrator` and `Next action: @Orchestrator integrate final.md to main, delete branch, run lightweight Done Gate, and close research issue`.
+Commit and push to `branch_name`. Return final path, final branch commit, reviewed draft identity, and approval evidence. The Final Promotion Ready message must include `Target agent: @Orchestrator` and `Next action: @Orchestrator integrate allowlisted research package to main, delete branch, run lightweight Done Gate, and close research issue`.
 
 Do not write `_index.md` in either mode.
 

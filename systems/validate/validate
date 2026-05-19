@@ -28,6 +28,7 @@ GITHUB_REF_PATTERN = re.compile(r"^github:[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$")
 NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$")
 PROTOCOL_COPY_GLOB = "agents/*/skills/*/references/squad-communication-protocol.md"
 PROTOCOL_CANONICAL = "squads/research-squad/protocol.md"
+RESEARCH_SQUAD_CONFIG = "squads/research-squad/squad.yaml"
 
 
 class YamlParseError(Exception):
@@ -202,10 +203,23 @@ def validate_protocol_copies():
     canonical = REPO_ROOT / PROTOCOL_CANONICAL
     if not canonical.is_file():
         return [f"Missing canonical protocol: {PROTOCOL_CANONICAL}"]
+
+    squad_config = REPO_ROOT / RESEARCH_SQUAD_CONFIG
+    if not squad_config.is_file():
+        errors.append(f"Missing squad config: {RESEARCH_SQUAD_CONFIG}")
+    else:
+        try:
+            data = load_yaml(squad_config.read_text())
+        except (YamlParseError, getattr(yaml, "YAMLError", YamlParseError)) as e:
+            errors.append(f"Squad YAML parse error: {e}")
+        else:
+            if not isinstance(data, dict) or data.get("protocol") != PROTOCOL_CANONICAL:
+                errors.append(f"squad.yaml protocol must be {PROTOCOL_CANONICAL}")
+
     canonical_text = canonical.read_text()
     copies = sorted(REPO_ROOT.glob(PROTOCOL_COPY_GLOB))
-    if not copies:
-        return ["No squad communication protocol copies found under agent skills"]
+    if len(copies) != 6:
+        errors.append(f"Expected 6 protocol copies under agent skills, found {len(copies)}")
     for copy_path in copies:
         if copy_path.read_text() != canonical_text:
             errors.append(f"Protocol copy differs from canonical: {rel(copy_path)}")
@@ -254,7 +268,7 @@ def main():
         protocol_errors = validate_protocol_copies()
         if protocol_errors:
             all_passed = False
-        results.append(("protocol-copies", 1, not protocol_errors, protocol_errors))
+        results.append(("protocol-copies", 3, not protocol_errors, protocol_errors))
 
     name_width = max(len(r[0]) for r in results)
     print(f"{'Component':<{name_width}}  {'Checks':>6}  Result")

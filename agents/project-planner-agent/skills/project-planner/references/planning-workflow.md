@@ -20,6 +20,7 @@
 
 - `project_slug`: derived from project title, lowercase, hyphen-separated, stable, no Linear IDs.
 - `topic_slug`: one per research issue, human-readable, stable, no Linear IDs.
+- Slugs must match `^[a-z0-9][a-z0-9-]*[a-z0-9]$`; spaces, uppercase letters, underscores, slashes, and issue IDs are invalid because slugs become artifact paths and git branch segments.
 - Record the project slug derivation in Planner Complete.
 
 ## Research Issue Template
