@@ -1,0 +1,10 @@
+name: research-squad
+description: Five-agent research squad for systematic crypto and DeFi research.
+members:
+  orchestrator: agents/project-orchestrator-agent
+  planner: agents/project-planner-agent
+  researcher: agents/research-agent
+  adversarial: agents/research-adversarial-agent
+  writer: agents/technical-writer-agent
+coordination: orchestrator-driven
+protocol: squads/research-squad/protocol.md

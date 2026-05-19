@@ -1,0 +1,272 @@
+#!/usr/bin/env python3
+"""Validate component configs against the repo schema."""
+
+import argparse
+import glob
+import os
+import re
+import sys
+from pathlib import Path
+
+try:
+    import yaml
+except ModuleNotFoundError:  # pragma: no cover - exercised in minimal local envs
+    yaml = None
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+REQUIRED_FIELDS = ["name", "description", "runtime", "model", "system_instructions"]
+VALID_RUNTIMES = {"claude-code", "codex", "opencode"}
+VALID_VISIBILITIES = {"private", "public"}
+LEGACY_FIELDS = {
+    "tool": "runtime",
+    "env": "custom_env",
+    "cli_args": "custom_args",
+    "concurrency": "max_concurrent_tasks",
+}
+GITHUB_REF_PATTERN = re.compile(r"^github:[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$")
+NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$")
+PROTOCOL_COPY_GLOB = "agents/*/skills/*/references/squad-communication-protocol.md"
+PROTOCOL_CANONICAL = "squads/research-squad/protocol.md"
+
+
+class YamlParseError(Exception):
+    pass
+
+
+def _parse_scalar(value):
+    value = value.strip()
+    if value in {"", "null", "None", "~"}:
+        return None
+    if value == "{}":
+        return {}
+    if value == "[]":
+        return []
+    if value in {"true", "false"}:
+        return value == "true"
+    if value.startswith('"') and value.endswith('"'):
+        return value[1:-1]
+    if value.startswith("'") and value.endswith("'"):
+        return value[1:-1]
+    if re.fullmatch(r"-?\d+", value):
+        return int(value)
+    return value
+
+
+def _fallback_safe_load(text):
+    """Parse the small YAML subset used by agent config files."""
+    data = {}
+    current_key = None
+    current_list = None
+
+    for lineno, raw_line in enumerate(text.splitlines(), start=1):
+        line = raw_line.split("#", 1)[0].rstrip()
+        if not line.strip():
+            continue
+
+        indent = len(raw_line) - len(raw_line.lstrip(" "))
+        stripped = line.strip()
+
+        if indent == 0:
+            current_key = None
+            current_list = None
+            if ":" not in stripped:
+                raise YamlParseError(f"line {lineno}: expected key: value")
+            key, value = stripped.split(":", 1)
+            key = key.strip()
+            value = value.strip()
+            if value == "":
+                data[key] = []
+                current_key = key
+                current_list = data[key]
+            else:
+                data[key] = _parse_scalar(value)
+            continue
+
+        if current_list is not None and stripped.startswith("- "):
+            item = stripped[2:].strip()
+            if re.search(r":\s+", item):
+                key, value = item.split(":", 1)
+                current_list.append({key.strip(): _parse_scalar(value)})
+            else:
+                current_list.append(_parse_scalar(item))
+            continue
+
+        if current_list is not None and current_list and isinstance(current_list[-1], dict):
+            if ":" not in stripped:
+                raise YamlParseError(f"line {lineno}: expected nested key: value")
+            key, value = stripped.split(":", 1)
+            current_list[-1][key.strip()] = _parse_scalar(value)
+            continue
+
+        if current_key is not None:
+            continue
+
+        raise YamlParseError(f"line {lineno}: unsupported YAML structure")
+
+    return data
+
+
+def load_yaml(text):
+    if yaml is not None:
+        return yaml.safe_load(text)
+    return _fallback_safe_load(text)
+
+
+def rel(path):
+    return str(path.relative_to(REPO_ROOT))
+
+
+def path_exists(repo_path):
+    return (REPO_ROOT / repo_path).exists()
+
+
+def validate_agent(filepath):
+    errors = []
+    path = Path(filepath)
+    expected_name = path.stem
+    relpath = rel(path)
+    expected_relpath = f"agents/{expected_name}/{expected_name}.yaml"
+
+    try:
+        with open(path) as f:
+            data = load_yaml(f.read())
+    except (YamlParseError, getattr(yaml, "YAMLError", YamlParseError)) as e:
+        errors.append(f"YAML parse error: {e}")
+        return expected_name, errors
+
+    if not isinstance(data, dict):
+        errors.append("YAML root is not a mapping")
+        return expected_name, errors
+
+    for field in REQUIRED_FIELDS:
+        if field not in data or data[field] is None or str(data[field]).strip() == "":
+            errors.append(f"Missing required field: {field}")
+
+    for legacy, replacement in LEGACY_FIELDS.items():
+        if legacy in data:
+            errors.append(f"Legacy field found: {legacy}; use {replacement}")
+
+    name = data.get("name")
+    if name:
+        if not isinstance(name, str) or not NAME_PATTERN.match(name):
+            errors.append(f"Invalid name: {name}")
+        if name != expected_name:
+            errors.append(f"Name mismatch: field={name}, file={expected_name}")
+        if relpath != expected_relpath:
+            errors.append(f"Path mismatch: expected {expected_relpath}, got {relpath}")
+
+    runtime = data.get("runtime")
+    if runtime and runtime not in VALID_RUNTIMES:
+        errors.append(f"Unknown runtime: {runtime}")
+
+    visibility = data.get("visibility")
+    if visibility is not None and visibility not in VALID_VISIBILITIES:
+        errors.append(f"Invalid visibility: {visibility}")
+
+    mct = data.get("max_concurrent_tasks")
+    if mct is not None:
+        if not isinstance(mct, int) or mct <= 0:
+            errors.append("max_concurrent_tasks must be a positive integer")
+
+    si = data.get("system_instructions")
+    if si:
+        if not os.path.isfile(REPO_ROOT / si):
+            errors.append(f"File not found: {si}")
+        expected_instructions = f"agents/{expected_name}/instructions.md"
+        if si != expected_instructions:
+            errors.append(f"system_instructions should be {expected_instructions}")
+
+    for path_ref in data.get("knowledge", []):
+        if not path_exists(path_ref):
+            errors.append(f"Missing: {path_ref}")
+
+    for ref in data.get("skills", []):
+        if isinstance(ref, str) and ref.startswith("github:"):
+            if not GITHUB_REF_PATTERN.match(ref):
+                errors.append(f"Invalid format: {ref}")
+        elif isinstance(ref, str):
+            full = REPO_ROOT / ref
+            if not full.exists():
+                errors.append(f"Missing: {ref}")
+            elif full.is_dir() and not (full / "SKILL.md").is_file():
+                errors.append(f"Missing skill file: {ref}/SKILL.md")
+        else:
+            errors.append(f"Invalid skill entry: {ref}")
+
+    return expected_name, errors
+
+
+def validate_protocol_copies():
+    errors = []
+    canonical = REPO_ROOT / PROTOCOL_CANONICAL
+    if not canonical.is_file():
+        return [f"Missing canonical protocol: {PROTOCOL_CANONICAL}"]
+    canonical_text = canonical.read_text()
+    copies = sorted(REPO_ROOT.glob(PROTOCOL_COPY_GLOB))
+    if not copies:
+        return ["No squad communication protocol copies found under agent skills"]
+    for copy_path in copies:
+        if copy_path.read_text() != canonical_text:
+            errors.append(f"Protocol copy differs from canonical: {rel(copy_path)}")
+    return errors
+
+
+def discover_agent_files():
+    return sorted(glob.glob(str(REPO_ROOT / "agents" / "*" / "*.yaml")))
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Validate component configs")
+    parser.add_argument("--agent", help="Validate a single agent by name")
+    parser.add_argument("--skip-protocol", action="store_true", help="Skip protocol copy consistency check")
+    parser.add_argument(
+        "files", nargs="*", help="Explicit file paths (overrides --agent and default glob)"
+    )
+    args = parser.parse_args()
+
+    if args.files:
+        files = [str((REPO_ROOT / path).resolve()) if not os.path.isabs(path) else path for path in args.files]
+    elif args.agent:
+        path = REPO_ROOT / "agents" / args.agent / f"{args.agent}.yaml"
+        if not path.is_file():
+            print(f"Agent config not found: {path}")
+            sys.exit(1)
+        files = [str(path)]
+    else:
+        files = discover_agent_files()
+
+    if not files:
+        print("No agent configs found.")
+        sys.exit(1)
+
+    all_passed = True
+    results = []
+
+    for filepath in files:
+        agent_name, errors = validate_agent(filepath)
+        passed = len(errors) == 0
+        if not passed:
+            all_passed = False
+        results.append((agent_name, len(REQUIRED_FIELDS) + 7, passed, errors))
+
+    if not args.skip_protocol:
+        protocol_errors = validate_protocol_copies()
+        if protocol_errors:
+            all_passed = False
+        results.append(("protocol-copies", 1, not protocol_errors, protocol_errors))
+
+    name_width = max(len(r[0]) for r in results)
+    print(f"{'Component':<{name_width}}  {'Checks':>6}  Result")
+    print(f"{'-' * name_width}  {'-' * 6}  ------")
+    for component, checks, passed, errors in results:
+        status = "PASS" if passed else "FAIL"
+        print(f"{component:<{name_width}}  {checks:>6}  {status}")
+        for err in errors:
+            print(f"  - {err}")
+
+    sys.exit(0 if all_passed else 1)
+
+
+if __name__ == "__main__":
+    main()

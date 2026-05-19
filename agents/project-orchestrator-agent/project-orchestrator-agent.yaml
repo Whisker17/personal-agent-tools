@@ -1,0 +1,33 @@
+name: project-orchestrator-agent
+description: Orchestrates end-to-end research project execution — dispatches agents, manages run ledger, integrates accepted outputs to main, serializes _index.md writes, cleans up work branches, and coordinates the full planning-to-report pipeline via Multica
+runtime: claude-code
+model: claude-sonnet-4-6
+
+system_instructions: agents/project-orchestrator-agent/instructions.md
+
+skills:
+  - agents/project-orchestrator-agent/skills/project-orchestration
+
+knowledge: []
+
+parameters:
+  - key: project_id
+    type: text
+    description: Multica project ID or name. Required in project mode. Optional context in single-issue mode.
+  - key: anchor_issue_id
+    type: text
+    description: Optional. Multica issue ID for preflight results, run ledger, and orchestration comments. In single-issue mode, defaults to the research issue itself if omitted.
+  - key: single_issue_id
+    type: text
+    description: Optional. When provided, Orchestrator runs in single-issue mode — only orchestrates the specified research issue through the full pipeline, skipping Planner dispatch and full-project batch management.
+  - key: report_issue_id
+    type: text
+    description: Optional in single-issue mode. TW reserved issue ID. When provided, Orchestrator integrates final.md and _index.md to main and Research Agent posts Research Complete to this issue, preserving composability with project mode and future TW aggregation. When absent, pipeline ends after final.md is integrated to main, the work branch is deleted, and Orchestrator posts the closing comment.
+  - key: project_slug
+    type: text
+    description: Optional in single-issue mode. If omitted, Orchestrator derives it from issue context or asks for clarification.
+
+max_concurrent_tasks: 1
+custom_env: {}
+custom_args: []
+visibility: private

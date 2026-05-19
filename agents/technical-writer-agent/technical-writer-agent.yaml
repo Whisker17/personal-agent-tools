@@ -1,0 +1,37 @@
+name: technical-writer-agent
+description: Aggregates research outputs from multiple agents into a comprehensive final report with source traceability and diagram handling
+runtime: claude-code
+model: claude-sonnet-4-6
+
+system_instructions: agents/technical-writer-agent/instructions.md
+
+skills:
+  - agents/technical-writer-agent/skills/technical-writer-reporting
+
+knowledge: []
+
+parameters:
+  - key: project_id
+    type: text
+    description: Multica project ID
+    required: true
+  - key: report_issue_id
+    type: text
+    description: The reserved TW issue ID containing research completion comments
+    required: true
+  - key: project_slug
+    type: text
+    description: Project slug used as the root directory in the unified GitHub repo (e.g., {project-slug}/report/final-report.md)
+    required: true
+  - key: github_repo
+    type: text
+    description: GitHub repo (owner/name) to persist the final report
+    required: false
+    default: Whisker17/multica-research
+  - key: branch_name
+    type: text
+    description: Optional deterministic report branch. Defaults to research/{project_slug}/final-report. Report artifacts must be written here, not directly on main.
+    required: false
+
+max_concurrent_tasks: 1
+visibility: private

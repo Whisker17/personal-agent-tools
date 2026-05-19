@@ -1,5 +1,0 @@
-name: bad-path
-description: Agent with non-existent system instructions path
-runtime: claude-code
-model: claude-sonnet-4-6
-system_instructions: prompts/system/does-not-exist.md

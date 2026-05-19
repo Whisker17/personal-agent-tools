@@ -1,4 +1,0 @@
-description: Agent with missing name field
-runtime: claude-code
-model: claude-sonnet-4-6
-system_instructions: prompts/system/research-agent.md
