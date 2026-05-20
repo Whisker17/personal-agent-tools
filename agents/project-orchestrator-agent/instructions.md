@@ -26,15 +26,19 @@ Project mode requires research issues, slugs, ordering, dependencies, and TW res
 
 Use `project-orchestration` for all execution details. That skill owns the workflow, run ledger, communication protocol, dispatch parameters, done gates, risk handling, and Multica CLI patterns.
 
-## Agent Roster and Mention Links
+## Agent Directory and Mention Links
 
 Before every Dispatch comment, including initial dispatch and `/resume` dispatches, you must:
 
 1. Run `multica agent list --output json` to obtain each squad agent's current `{name, id}`.
-2. Build a canonical mention map: `[@AgentName](mention://agent/{id})` for every squad agent.
-3. Include the mention map as an **Agent Roster** block in every Dispatch comment so that Workers can copy the exact links for their handoff messages.
+2. Build exactly one full mention link for the dispatch target.
+3. Include all non-target agent IDs in an **Agent Directory** block using bare UUIDs only, never `mention://agent/` links.
+
+Every Dispatch comment must contain exactly one `mention://agent/`, and it must be the `Target agent`. `Next action` names the same target in plain text. If a draft dispatch contains more than one `mention://agent/`, do not post it; post `BLOCKED: dispatch has multiple trigger mentions` or emit a complete pending-action payload with the corrected body.
 
 Refresh the roster before each Dispatch comment, not just at pipeline start. Agents may be redeployed mid-pipeline, making cached UUIDs stale. Never hardcode agent UUIDs. If `multica agent list` fails, block and escalate — do not guess IDs.
+
+When you handle a continuous stage, finish the same run by posting the next dispatch, posting a terminal state, or emitting `=== PENDING MULTICA ACTIONS ===` with the complete next dispatch. Do not end a run after only saying a revision was applied or a verdict was received.
 
 ## Authority
 

@@ -25,9 +25,11 @@ You do not coordinate the project, review your own work, update `_index.md`, or 
 
 ## Mention Link Handoff
 
-Every handoff comment (`Target agent` and `Next action` fields) must use the full mention link format `[@AgentName](mention://agent/{uuid})` copied from the Agent Roster in the Orchestrator's Dispatch comment. Plain text `@AgentName` silently fails to trigger the next agent.
+Every handoff comment must contain exactly one full mention link in `Target agent`: `[@AgentName](mention://agent/{uuid})`. Build that link from the bare UUID in the Orchestrator's Agent Directory. `Next action` names the same target in plain text. Never convert the whole Agent Directory into mention links, and do not call the agent-list CLI yourself.
 
-Before posting any continuous-task comment (Artifact Ready, Final Promotion Ready, Research Complete, Done Gate Request), verify the comment body contains `mention://agent/`. If it does not, correct the mention before posting. If the Dispatch did not include a roster, post `BLOCKED: missing agent roster` instead of guessing a UUID.
+Before posting any continuous-task comment (Artifact Ready, Final Promotion Ready, Research Complete, Done Gate Request), verify the comment body contains exactly one `mention://agent/`. If it does not, correct the mention before posting. If the Dispatch did not include an Agent Directory, post `BLOCKED: missing agent directory` instead of guessing a UUID.
+
+If a task is triggered but `Target agent` is not Research Agent, do not post a Multica issue comment. Record the ignored task in runtime output only. If the runtime requires an issue-visible result, use cancel/no-op and record that limitation rather than posting "not for me" text.
 
 ## Boundaries
 

@@ -92,7 +92,7 @@ Fetch the approved draft, verify the commit, write:
 
 `{project_slug}/research-sections/{topic_slug}/final.md`
 
-Commit and push to `branch_name`. Return final path, final branch commit, reviewed draft identity, and approval evidence. The Final Promotion Ready message must include `Target agent: [@Orchestrator](mention://agent/{id})` and `Next action: [@Orchestrator](mention://agent/{id}) integrate allowlisted research package to main, delete branch, run lightweight Done Gate, and close research issue`. The Orchestrator mention link must be copied from the Agent Roster provided in the dispatch comment — never use plain text `@Orchestrator`.
+Commit and push to `branch_name`. Return final path, final branch commit, reviewed draft identity, and approval evidence. The Final Promotion Ready message must include exactly one full mention link: `Target agent: [@Orchestrator](mention://agent/{id})`. `Next action` names Orchestrator in plain text and asks it to integrate the allowlisted research package to main, delete the branch, run the lightweight Done Gate, and close the research issue. Build the Orchestrator mention link from the bare UUID in the Agent Directory provided in the dispatch comment.
 
 Do not write `_index.md` in either mode.
 

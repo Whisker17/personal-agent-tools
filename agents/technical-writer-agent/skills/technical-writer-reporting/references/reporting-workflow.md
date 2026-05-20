@@ -75,7 +75,7 @@ Post Final Report Ready on the TW reserved issue. Include:
 - sections index path;
 - inputs consumed with approval/accept-risk links;
 - unresolved risks or integration gaps;
-- target agent: use the Orchestrator mention link from the Agent Roster provided in the dispatch (`[@Orchestrator](mention://agent/{id})`). Never use plain text `@Orchestrator`.
+- target agent: build exactly one Orchestrator mention link from the bare UUID in the Agent Directory provided in the dispatch (`[@Orchestrator](mention://agent/{id})`). `Next action` names Orchestrator in plain text.
 
 Use `squad-communication-protocol.md` for exact message shape and fallback payload.
 

@@ -70,7 +70,7 @@ Worker agents write outlines, drafts, final sections, and final reports only on 
 | Channel | Purpose | Notes |
 |---|---|---|
 | **Multica issue comments** | Primary channel for dispatches, updates, review feedback, blockers, artifact-ready messages, and completion reports | All structured messages use the templates in Section 8 |
-| **@mentions** | Trigger the receiving agent to act | Must use Multica mention link format: `[@AgentName](mention://agent/{uuid})`. Plain text `@AgentName` does **not** trigger a task. Agent UUIDs come from the Agent Roster (see Section 8). |
+| **@mentions** | Trigger the receiving agent to act | Dispatch and handoff comments must contain exactly one Multica mention link: `[@AgentName](mention://agent/{uuid})`. Plain text `@AgentName` does **not** trigger a task. Non-target agent UUIDs come from the non-triggering Agent Directory (see Section 8). |
 | **Emoji reactions** | Orchestrator acknowledges messages | Reactions never replace decision comments |
 | **GitHub artifacts** | Persisted outline/draft/final files | Referenced from comments and run ledger by path and commit URL/SHA |
 
@@ -212,35 +212,63 @@ Blocked state is represented by a comment prefix (`BLOCKED:` or with warning emo
 
 Every message comment must include: `issue_id`, `project_slug`, `topic_slug`, `phase`, `round`, `target_agent`, and `next_action`. Artifact-related messages must also include artifact paths and commit URL/SHA. Project-level messages without a research topic use `topic_slug: final-report`.
 
-### Agent Roster
+### Agent Directory
 
-Multica requires the full mention link format `[@AgentName](mention://agent/{uuid})` to trigger a task. Plain text `@AgentName` or stale/wrong UUIDs will silently fail to trigger.
+Multica treats every `mention://agent/{uuid}` in a comment as a trigger. It does not distinguish a reference list from the actual target. Therefore every dispatch and continuous handoff comment must contain exactly one full agent mention link, and that mention must be the current target agent.
 
 **Orchestrator** is responsible for providing the roster:
 
 1. Before each Dispatch comment, Orchestrator runs `multica agent list --output json` to obtain the current `{name, id}` mapping. This ensures the roster is never stale, even if agents are redeployed mid-pipeline.
-2. Every Dispatch comment includes an **Agent Roster** block with pre-built mention links for all squad agents:
+2. Every Dispatch comment includes an **Agent Directory** block with bare UUIDs only:
 
 ```markdown
-**Agent Roster** (use these exact links for all @mentions):
-- Orchestrator: [@Orchestrator](mention://agent/{orchestrator-id})
-- Deep Research Agent: [@Deep Research Agent](mention://agent/{research-id})
-- Research Review Agent: [@Research Review Agent](mention://agent/{review-id})
-- Technical Writer Agent: [@Technical Writer Agent](mention://agent/{tw-id})
+**Agent Directory** (non-triggering, for handoff construction):
+- Orchestrator: `{orchestrator-id}`
+- Deep Research Agent: `{research-id}`
+- Research Review Agent: `{review-id}`
+- Technical Writer Agent: `{tw-id}`
 ```
 
-3. Worker agents **must** copy the exact mention link from the roster when writing `Target agent` and `Next action` fields. Never write plain text `@AgentName` as a trigger.
-4. If a dispatch does not include a roster, the Worker must post `BLOCKED: missing agent roster in dispatch — cannot generate valid handoff mention` instead of guessing an agent UUID.
+3. The dispatch `Target agent` field contains the only full `mention://agent/` link in the dispatch body. `Next action` names the same target in plain text unless the protocol template explicitly places the single mention there instead of `Target agent`.
+4. Worker agents build exactly one target mention link from the Agent Directory UUID when writing `Target agent` and use plain text for the same target in `Next action`. Never write plain text `@AgentName` as a trigger, and never turn the whole Agent Directory into mention links.
+5. Worker agents do not call `multica agent list` for handoff construction; Orchestrator is the roster provider.
+6. Project Planner is not a runtime squad member. Do not include Project Planner in runtime dispatch mentions or the Agent Directory.
+7. If a dispatch does not include an Agent Directory, the Worker must post `BLOCKED: missing agent directory in dispatch — cannot generate valid handoff mention` instead of guessing an agent UUID.
+
+### Single-Target Trigger Self-Check
+
+Before posting any dispatch or continuous handoff, the posting agent must check:
+
+- The comment body contains exactly one `mention://agent/`.
+- The only full mention points to the `Target agent`.
+- The Agent Directory contains only bare UUIDs and contains no `mention://agent/`.
+
+If a dispatch fails this check, Orchestrator must not post it as-is. It must post `BLOCKED: dispatch has multiple trigger mentions` or emit a complete `=== PENDING MULTICA ACTIONS ===` payload with a corrected single-target dispatch body.
 
 ### Handoff Rules
 
 All agents must follow these rules when posting completion messages:
 
-- **Continuous tasks** (handoff required): the completion message must include the target agent's full mention link (from the roster) in both `Target agent` and `Next action` fields. Plain text role names do not trigger the next agent.
+- **Continuous tasks** (handoff required): the completion message must include exactly one full target-agent mention link, constructed from the Agent Directory, in `Target agent`. Use plain text for the same target in `Next action`.
 - **Terminal tasks** (stoppable): closing comments, BLOCKED messages awaiting human intervention, and final pipeline endpoints do not require a mention link. Use `Target agent: none` and `Next action: none` or `Next action: awaiting human input`.
-- **Handoff self-check**: before posting a continuous-task comment, verify the comment body contains `mention://agent/`. If it does not, the handoff is malformed and must be corrected before posting.
-- In composable/project mode, the relay chain is: Final Promotion Ready → Orchestrator (mention link), Research Complete → Technical Writer (mention link), Done Gate Request → Orchestrator (mention link), Final Report Ready → Orchestrator (mention link).
-- In lightweight single-issue mode, Final Promotion Ready is still a continuous task: `Target agent: [@Orchestrator](mention://agent/{id})`, `Next action: [@Orchestrator](mention://agent/{id}) integrate allowlisted research package to main, delete branch, run lightweight Done Gate, and close research issue`. The Orchestrator closing comment is terminal.
+- **Handoff self-check**: before posting a continuous-task comment, verify the comment body contains exactly one `mention://agent/`. If it does not, the handoff is malformed and must be corrected before posting.
+- **Non-target guard**: if an agent task is triggered but the comment's `Target agent` is another agent, do not post a Multica issue comment. Record the ignored task only in runtime output. If Multica runtime does not allow a task to end without a comment, use the platform's cancel/no-op mechanism and record that limitation; do not write "not for me" noise into the issue thread.
+- In composable/project mode, the relay chain is: Final Promotion Ready -> Orchestrator, Research Complete -> Technical Writer, Done Gate Request -> Orchestrator, Final Report Ready -> Orchestrator.
+- In lightweight single-issue mode, Final Promotion Ready is still a continuous task: `Target agent: [@Orchestrator](mention://agent/{id})`, `Next action: Orchestrator integrates the allowlisted research package to main, deletes the branch, runs the lightweight Done Gate, and closes the research issue`. The Orchestrator closing comment is terminal.
+
+### Orchestrator Continuous-Action Rule
+
+Orchestrator is not a daemon and will not wake itself after a stalled handoff. When Orchestrator handles a continuous stage in one run, it must finish that run by doing one of the following:
+
+1. Post the next dispatch comment.
+2. Post a clear terminal state with `Target agent: none` and `Next action: awaiting human input`.
+3. Emit `=== PENDING MULTICA ACTIONS ===` with the complete next dispatch body if runtime capability prevents immediate posting.
+
+This applies after applying outline revisions, applying draft revisions, handling outline review verdicts, handling draft review verdicts, and handling Final Promotion Ready.
+
+### Timeline Reading Rule
+
+Do not read `multica issue runs` default output as chronological flow. For timeline display, sort comments and runs by `created_at` ascending, then use `phase` and `round` as the logical sequence markers. For concurrent runs under the same `trigger_comment_id`, show `started_at` and `completed_at` inside that group.
 
 ### 8.1 Dispatch
 
@@ -253,15 +281,15 @@ All agents must follow these rules when posting completion messages:
 **Branch**: research/{project-slug}/{topic-slug}
 **Phase**: {outline | outline-review | deep-draft | draft-review | final-promotion | tw-handoff | final-report}
 **Round**: {n}
-**Target agent**: {roster mention link for target agent}
-**Next action**: {explicit instruction, include roster mention link if handoff is continuous}
+**Target agent**: {single target mention link}
+**Next action**: {explicit instruction for target agent, plain text target name}
 **Inputs**: {paths or links}
 
-**Agent Roster** (use these exact links for all @mentions):
-- Orchestrator: [@Orchestrator](mention://agent/{orchestrator-id})
-- Deep Research Agent: [@Deep Research Agent](mention://agent/{research-id})
-- Research Review Agent: [@Research Review Agent](mention://agent/{review-id})
-- Technical Writer Agent: [@Technical Writer Agent](mention://agent/{tw-id})
+**Agent Directory** (non-triggering, for handoff construction):
+- Orchestrator: `{orchestrator-id}`
+- Deep Research Agent: `{research-id}`
+- Research Review Agent: `{review-id}`
+- Technical Writer Agent: `{tw-id}`
 ```
 
 ### 8.2 Artifact Ready: Outline
@@ -277,8 +305,8 @@ All agents must follow these rules when posting completion messages:
 **Round**: {n}
 **Artifact**: {project-slug}/outlines/{topic-slug}.md
 **Branch commit/URL**: {commit hash or permalink}
-**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster})
-**Next action**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster}) dispatch adversarial outline review
+**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-directory})
+**Next action**: Orchestrator dispatches adversarial outline review
 **Summary**: {1-2 sentences}
 ```
 
@@ -295,8 +323,8 @@ All agents must follow these rules when posting completion messages:
 **Round**: {n}
 **Draft path**: {project-slug}/research-sections/{topic-slug}/drafts/round-{n}.md
 **Draft branch commit/URL**: {commit hash or permalink}
-**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster})
-**Next action**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster}) dispatch adversarial draft review
+**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-directory})
+**Next action**: Orchestrator dispatches adversarial draft review
 **Summary**: {1-2 sentences}
 ```
 
@@ -317,8 +345,8 @@ All agents must follow these rules when posting completion messages:
 **Findings**:
 - {finding 1}
 - {finding 2}
-**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster})
-**Next action**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster}) {advance state | dispatch revision | accept-risk decision required | escalate}
+**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-directory})
+**Next action**: Orchestrator {advance state | dispatch revision | accept-risk decision required | escalate}
 ```
 
 ### 8.5 Revision Request
@@ -332,14 +360,14 @@ All agents must follow these rules when posting completion messages:
 **Branch**: research/{project-slug}/{topic-slug}
 **Phase**: {outline | deep-draft}
 **Round**: {n} -> {n+1}
-**Target agent**: [@Deep Research Agent](mention://agent/{research-id-from-roster})
+**Target agent**: [@Deep Research Agent](mention://agent/{research-id-from-directory})
 **Original artifact**: {outline path or draft path}
 **Original artifact branch commit/URL**: {commit hash or permalink}
 **Next artifact path**: {project-slug}/outlines/{topic-slug}.md (if outline) | {project-slug}/research-sections/{topic-slug}/drafts/round-{n+1}.md (if deep-draft)
 **Required changes**:
 - {change 1}
 - {change 2}
-**Next action**: [@Deep Research Agent](mention://agent/{research-id-from-roster}) produce revised artifact and post Artifact Ready
+**Next action**: Deep Research Agent produces revised artifact and posts Artifact Ready
 ```
 
 ### 8.6 Final Promotion Ready
@@ -364,8 +392,8 @@ All agents must follow these rules when posting completion messages:
 |-------|-----------|-----------------|------------|--------------|--------|
 | {order} | {topic-slug} | {multica_issue_id} | {project-slug}/research-sections/{topic-slug}/final.md | {upstream-slugs or -} | done |
 
-**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster})
-**Next action**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster}) validate proposal, integrate allowlisted research package (outline, draft rounds, final) and `_index.md` to main, delete branch, then dispatch TW handoff
+**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-directory})
+**Next action**: Orchestrator validates proposal, integrates allowlisted research package (outline, draft rounds, final) and `_index.md` to main, deletes branch, then dispatches TW handoff
 ```
 
 #### 8.6.1 Final Promotion Ready (Lightweight — no `report_issue_id`)
@@ -385,8 +413,8 @@ All agents must follow these rules when posting completion messages:
 **Final branch commit/URL**: {commit hash or permalink}
 **Adversarial approval or accept-risk**: {link}
 
-**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster})
-**Next action**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster}) integrate allowlisted research package to main, delete branch, run lightweight Done Gate, and close research issue
+**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-directory})
+**Next action**: Orchestrator integrates allowlisted research package to main, deletes branch, runs lightweight Done Gate, and closes research issue
 ```
 
 The lightweight variant omits the Index Entry Proposal table. It is still a continuous task requiring an Orchestrator mention link handoff.
@@ -417,8 +445,8 @@ Research Complete is posted on the **TW reserved issue** only after Orchestrator
 - {finding 1}
 - {finding 2}
 - {finding 3}
-**Target agent**: [@Technical Writer Agent](mention://agent/{tw-id-from-roster}) (via TW reserved issue)
-**Next action**: [@Technical Writer Agent](mention://agent/{tw-id-from-roster}) aggregate into final report
+**Target agent**: [@Technical Writer Agent](mention://agent/{tw-id-from-directory}) (via TW reserved issue)
+**Next action**: Technical Writer Agent aggregates into final report
 ```
 
 ### 8.8 Done Gate Request
@@ -435,8 +463,8 @@ Done Gate Request is posted on the **research issue** after Research Complete is
 **Round**: {n}
 **Research Complete posted to**: {tw-issue-id}
 **Main integration commit/URL**: {commit hash or permalink from Orchestrator}
-**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster})
-**Next action**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster}) run Done Gate checklist and close research issue
+**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-directory})
+**Next action**: Orchestrator runs Done Gate checklist and closes research issue
 ```
 
 ### 8.9 Blocked
@@ -472,8 +500,8 @@ Done Gate Request is posted on the **research issue** after Research Complete is
 **Diagram assets branch commit/URL**: {commit hash or permalink, or same as final report commit if committed together}
 **Source sections aggregated**: {list of multica_issue_ids}
 **Sections index**: {project-slug}/research-sections/_index.md
-**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster})
-**Next action**: [@Orchestrator](mention://agent/{orchestrator-id-from-roster}) integrate allowlisted TW artifacts (final report and assets) to main, delete branch, record main_merge_commit, verify, and close project
+**Target agent**: [@Orchestrator](mention://agent/{orchestrator-id-from-directory})
+**Next action**: Orchestrator integrates allowlisted TW artifacts (final report and assets) to main, deletes branch, records main_merge_commit, verifies, and closes project
 ```
 
 ## 9. Two-Phase Adversarial Loop
@@ -581,9 +609,9 @@ Rules:
 
 ### Mention Link Failure Fallback
 
-If a Worker agent cannot generate a valid mention link (e.g., the dispatch did not include an Agent Roster, or `multica agent list` is unavailable), the Worker must:
+If a Worker agent cannot generate a valid mention link because the dispatch did not include an Agent Directory, the Worker must:
 
-1. Post the handoff comment with `Target agent: BLOCKED — no roster` instead of guessing an agent UUID.
+1. Post the handoff comment with `Target agent: BLOCKED — no directory` instead of guessing an agent UUID.
 2. Include a `=== PENDING MULTICA ACTIONS ===` block requesting that Orchestrator or a human relay re-post the handoff with the correct mention link.
 
 Never write plain text `@AgentName` as a substitute for a missing mention link — it will silently fail to trigger the target agent.
@@ -628,7 +656,7 @@ If `{project_slug}/research-sections/{topic_slug}/final.md` already exists:
 
 ### Handoff Rules (Repeated for Emphasis)
 
-- Continuous tasks: completion messages must include the target agent's full mention link (from the roster) in both `Target agent` and `Next action`. Plain text `@AgentName` does not trigger.
+- Continuous tasks: completion messages must include exactly one target agent mention link, constructed from the Agent Directory, in `Target agent`. `Next action` names the same target in plain text.
 - Terminal tasks: closing comments and BLOCKED states use `Target agent: none` / `Next action: none` or `Next action: awaiting human input`.
-- Lightweight Final Promotion Ready is continuous: `Target agent: [@Orchestrator](mention://agent/{id})`, `Next action: [@Orchestrator](mention://agent/{id}) integrate allowlisted research package to main, delete branch, run lightweight Done Gate, and close research issue`.
+- Lightweight Final Promotion Ready is continuous: `Target agent: [@Orchestrator](mention://agent/{id})`, `Next action: Orchestrator integrates allowlisted research package to main, deletes branch, runs lightweight Done Gate, and closes research issue`.
 - Orchestrator closing comment is terminal.

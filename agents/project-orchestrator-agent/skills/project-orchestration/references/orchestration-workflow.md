@@ -19,7 +19,7 @@ Mode is determined by parameter combination (mutually exclusive):
 | `single_issue_id` absent, `project_id` present | Project mode (existing behavior) |
 | Both absent | Error — require at least one |
 
-## Agent Roster
+## Agent Directory
 
 | Agent | Responsibility |
 |---|---|
@@ -29,13 +29,14 @@ Mode is determined by parameter combination (mutually exclusive):
 
 Research Agent and Adversarial Agent never communicate directly; Orchestrator relays all feedback.
 
-### Roster Fetch and Canonical Mention Links
+### Roster Fetch and Single Target Mention Links
 
 Before each Dispatch comment, Orchestrator must:
 
 1. Run `multica agent list --output json` to obtain each agent's current `{name, id}`.
-2. Build a canonical mention map: `[@AgentName](mention://agent/{id})` for each squad agent.
-3. Include the mention map as an **Agent Roster** block in every Dispatch comment so that Workers can copy the exact links for their handoff messages.
+2. Build exactly one full mention link for the dispatch target.
+3. Include a non-triggering **Agent Directory** block with bare UUIDs only for all other handoffs.
+4. Verify the dispatch body contains exactly one `mention://agent/`, and that it belongs to `Target agent`.
 
 Refresh the roster before each Dispatch, not just at pipeline start. Agents may be redeployed mid-pipeline, making cached UUIDs stale. Never hardcode agent UUIDs.
 
@@ -298,8 +299,10 @@ When `single_issue_id` is present, follow this flow instead of the full project 
 
 ### Handoff Rules
 
-- **Continuous tasks** (handoff required): completion messages must include the target agent's full mention link (from the Agent Roster) in both `Target agent` and `Next action` fields. Plain text `@AgentName` does not trigger a Multica task. The required format is `[@AgentName](mention://agent/{uuid})`.
+- **Continuous tasks** (handoff required): completion messages must include exactly one full target mention link in `Target agent`, built from the Agent Directory. `Next action` names the same target in plain text.
 - **Terminal tasks** (stoppable): closing comments, BLOCKED messages, and awaiting-human-input states do not require a mention link. Use `Target agent: none` / `Next action: none` or `Next action: awaiting human input`.
+
+When Orchestrator handles a continuous stage, it must finish the same run by posting the next dispatch, posting a terminal state, or emitting `=== PENDING MULTICA ACTIONS ===` with the complete next dispatch body.
 
 ### Issue Information Extraction
 

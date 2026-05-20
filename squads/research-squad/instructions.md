@@ -17,7 +17,7 @@ These instructions are injected into the leader agent's (Orchestrator) prompt fo
 3. **Artifact-before-review.** Adversarial Agent reviews persisted artifacts (committed files on the work branch), never ephemeral chat text or uncommitted content.
 4. **Deterministic branches.** Workers write on `research/{project-slug}/{topic-slug}`. If Multica starts a worker on a random branch, the worker must switch to the deterministic branch before writing.
 5. **Selective main integration.** Never squash-merge whole work branches into `main`; that can copy random runtime files. Integrate only allowlisted accepted artifacts: outline, persisted draft rounds, final section, and `_index.md` when applicable. Push `main`, then delete the work branch.
-6. **Continuous handoff.** Every non-terminal completion message must include the target agent's full mention link `[@AgentName](mention://agent/{uuid})` from the current Agent Roster in both `Target agent` and `Next action`. Plain text `@AgentName` silently fails to trigger. Terminal messages (closing comments, BLOCKED states) use `Target agent: none`.
+6. **Single-target handoff.** Every non-terminal completion message must contain exactly one full target-agent mention link `[@AgentName](mention://agent/{uuid})`, built from the current Agent Directory, in `Target agent`. `Next action` names the same target in plain text. Terminal messages (closing comments, BLOCKED states) use `Target agent: none`.
 7. **Slug discipline.** Pre-planned project metadata must use lowercase hyphenated `project_slug` and `topic_slug` values; invalid slugs block branch creation.
 8. **Read-only review.** Adversarial Agent reads persisted artifacts from the specified branch commit and never writes research artifacts.
 
@@ -37,3 +37,7 @@ These instructions are injected into the leader agent's (Orchestrator) prompt fo
 ## Communication Standard
 
 All structured messages must include: `issue_id`, `project_slug`, `topic_slug`, `phase`, `round`, `target_agent`, and `next_action`. Artifact-related messages must also include artifact paths and commit URL/SHA. Refer to the `project-orchestration` skill for message templates and the full state machine.
+
+## Dispatch Noise Guard
+
+Dispatch comments must include only the current target's `mention://agent/` link. Non-target UUIDs belong in the non-triggering Agent Directory as bare UUIDs only. If a task is triggered but `Target agent` is another agent, do not post a Multica issue comment; record the ignored task in runtime output or use the runtime cancel/no-op path.

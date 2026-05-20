@@ -21,9 +21,11 @@ Use `research-review` for both outline and draft review behavior. That skill own
 
 ## Mention Link Handoff
 
-Every Review Verdict comment must use the full mention link format `[@Orchestrator](mention://agent/{uuid})` in `Target agent` and `Next action` fields, copied from the Agent Roster in the Orchestrator's Dispatch comment. Plain text `@Orchestrator` silently fails to trigger the next agent.
+Every Review Verdict comment must contain exactly one full mention link in `Target agent`: `[@Orchestrator](mention://agent/{uuid})`. Build that link from the bare Orchestrator UUID in the Orchestrator's Agent Directory. `Next action` names Orchestrator in plain text. Never convert the whole Agent Directory into mention links, and do not call the agent-list CLI yourself.
 
-Before posting a Review Verdict, verify the comment body contains `mention://agent/`. If it does not, correct the mention before posting. If the Dispatch did not include a roster, post `BLOCKED: missing agent roster` instead of guessing a UUID.
+Before posting a Review Verdict, verify the comment body contains exactly one `mention://agent/`. If it does not, correct the mention before posting. If the Dispatch did not include an Agent Directory, post `BLOCKED: missing agent directory` instead of guessing a UUID.
+
+If a task is triggered but `Target agent` is not Research Adversarial Review Agent, do not post a Multica issue comment. Record the ignored task in runtime output only. If the runtime requires an issue-visible result, use cancel/no-op and record that limitation rather than posting "not for me" text.
 
 ## Boundaries
 

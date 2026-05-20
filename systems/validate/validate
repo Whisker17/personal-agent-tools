@@ -29,6 +29,32 @@ NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$")
 PROTOCOL_COPY_GLOB = "agents/*/skills/*/references/squad-communication-protocol.md"
 PROTOCOL_CANONICAL = "squads/research-squad/protocol.md"
 RESEARCH_SQUAD_CONFIG = "squads/research-squad/squad.yaml"
+RESEARCH_POLICY_GLOBS = [
+    "squads/research-squad/*.md",
+    "agents/project-orchestrator-agent/**/*.md",
+    "agents/project-planner-agent/**/*.md",
+    "agents/research-agent/**/*.md",
+    "agents/research-adversarial-agent/**/*.md",
+    "agents/technical-writer-agent/**/*.md",
+]
+WORKER_POLICY_GLOBS = [
+    "agents/project-planner-agent/instructions.md",
+    "agents/research-agent/**/*.md",
+    "agents/research-adversarial-agent/**/*.md",
+    "agents/technical-writer-agent/**/*.md",
+]
+NON_TARGET_GUARD_FILES = [
+    "agents/project-planner-agent/instructions.md",
+    "agents/research-agent/instructions.md",
+    "agents/research-adversarial-agent/instructions.md",
+    "agents/technical-writer-agent/instructions.md",
+]
+FORBIDDEN_RESEARCH_POLICY_TERMS = [
+    "event_seq",
+    "parent_event",
+    "daemon-style watchdog",
+    "daemon watchdog",
+]
 
 
 class YamlParseError(Exception):
@@ -226,6 +252,140 @@ def validate_protocol_copies():
     return errors
 
 
+def _rel_to_root(path, root):
+    return str(path.relative_to(root))
+
+
+def _markdown_sections(text):
+    heading_re = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
+    matches = list(heading_re.finditer(text))
+    for index, match in enumerate(matches):
+        level = len(match.group(1))
+        title = match.group(2)
+        start = match.end()
+        end = len(text)
+        for next_match in matches[index + 1 :]:
+            end = next_match.start()
+            break
+        yield level, title, text[start:end]
+
+
+def _policy_files(root, globs):
+    files = []
+    for pattern in globs:
+        files.extend(root.glob(pattern))
+    return sorted({path for path in files if path.is_file()})
+
+
+def _directory_block_has_trigger_mention(lines, start_index):
+    for line in lines[start_index + 1 : start_index + 12]:
+        stripped = line.strip()
+        if stripped == "```" or stripped.startswith("#"):
+            break
+        if stripped and not stripped.startswith("-"):
+            break
+        if "mention://agent/" in line:
+            return True
+    return False
+
+
+def validate_research_squad_dispatch_policy(root=REPO_ROOT):
+    """Validate research squad dispatch/handoff policy is single-target."""
+    root = Path(root)
+    errors = []
+    files = _policy_files(root, RESEARCH_POLICY_GLOBS)
+    worker_files = set(_policy_files(root, WORKER_POLICY_GLOBS))
+
+    for path in files:
+        text = path.read_text()
+        relpath = _rel_to_root(path, root)
+
+        if "agent roster" in text.lower():
+            errors.append(f"{relpath}: use non-triggering Agent Directory, not agent roster")
+
+        lines = text.splitlines()
+        for index, line in enumerate(lines):
+            if line.strip().startswith("**Agent Directory") and _directory_block_has_trigger_mention(lines, index):
+                errors.append(f"{relpath}: Agent Directory must not contain mention://agent links")
+                break
+
+        for term in FORBIDDEN_RESEARCH_POLICY_TERMS:
+            if term in text:
+                errors.append(f"{relpath}: forbidden research dispatch term found: {term}")
+
+        if path in worker_files:
+            for lineno, line in enumerate(text.splitlines(), start=1):
+                lowered = line.lower()
+                if "multica agent list" not in lowered:
+                    continue
+                allowed = (
+                    "orchestrator" in lowered
+                    or "do not" in lowered
+                    or "never" in lowered
+                    or "not call" in lowered
+                    or "does not" in lowered
+                    or "without" in lowered
+                    or "unavailable" in lowered
+                )
+                if not allowed:
+                    errors.append(f"{relpath}:{lineno}: worker must not call multica agent list for handoff")
+                    break
+
+        for level, title, body in _markdown_sections(text):
+            if level == 1:
+                continue
+            normalized_title = title.lower()
+            if (
+                "dispatch" in normalized_title
+                and not any(
+                    excluded in normalized_title
+                    for excluded in ["dispatch flow", "dispatch parameters", "dispatch note", "dispatching"]
+                )
+                and body.count("mention://agent/") > 1
+            ):
+                errors.append(f"{relpath}: dispatch section '{title}' has multiple trigger mentions")
+
+            if (
+                "**Target agent**" in body
+                and "**Next action**" in body
+                and body.count("mention://agent/") > 1
+            ):
+                errors.append(f"{relpath}: handoff template section '{title}' has multiple trigger mentions")
+
+    canonical = root / PROTOCOL_CANONICAL
+    if canonical.is_file():
+        protocol = canonical.read_text()
+        required = {
+            "Agent Directory": "non-triggering Agent Directory",
+            "created_at": "created_at timeline sorting",
+            "phase": "phase timeline marker",
+            "round": "round timeline marker",
+            "multica issue runs": "run history sorting note",
+            "Continuous-Action": "Orchestrator continuous-action rule",
+            "pending actions": "pending actions fallback",
+            "do not post a Multica issue comment": "silent non-target guard",
+            "cancel/no-op": "non-target runtime fallback",
+        }
+        for needle, description in required.items():
+            if needle not in protocol:
+                errors.append(f"{PROTOCOL_CANONICAL}: missing {description}")
+
+    for relpath in NON_TARGET_GUARD_FILES:
+        guard_file = root / relpath
+        if not guard_file.is_file():
+            continue
+        text = guard_file.read_text()
+        missing = [
+            phrase
+            for phrase in ["do not post a Multica issue comment", "cancel/no-op"]
+            if phrase not in text
+        ]
+        if missing:
+            errors.append(f"{relpath}: missing silent non-target guard")
+
+    return errors
+
+
 def discover_agent_files():
     return sorted(glob.glob(str(REPO_ROOT / "agents" / "*" / "*.yaml")))
 
@@ -269,6 +429,11 @@ def main():
         if protocol_errors:
             all_passed = False
         results.append(("protocol-copies", 3, not protocol_errors, protocol_errors))
+
+        policy_errors = validate_research_squad_dispatch_policy()
+        if policy_errors:
+            all_passed = False
+        results.append(("research-dispatch-policy", 9, not policy_errors, policy_errors))
 
     name_width = max(len(r[0]) for r in results)
     print(f"{'Component':<{name_width}}  {'Checks':>6}  Result")
