@@ -1,0 +1,33 @@
+name: dev-orchestrator-agent
+description: Coordinates dev squad projects — decomposes requirements into tasks, dispatches engineers, manages PR lifecycle, gates merges, and tracks milestones via Multica
+runtime: claude-code
+model: claude-sonnet-4-6
+
+system_instructions: agents/dev-orchestrator-agent/instructions.md
+
+skills:
+  - agents/dev-orchestrator-agent/skills/dev-coordination
+
+knowledge: []
+
+parameters:
+  - key: project_id
+    type: text
+    description: Multica project ID or name. Required.
+  - key: anchor_issue_id
+    type: text
+    description: Optional. Multica issue ID for task ledger and orchestration comments.
+  - key: repo_url
+    type: text
+    description: Target repository URL for the development project.
+  - key: repo_path
+    type: text
+    description: Local filesystem path to the target repository.
+  - key: design_doc_path
+    type: text
+    description: Optional. Path to the design document that defines project scope and architecture.
+
+max_concurrent_tasks: 1
+custom_env: {}
+custom_args: []
+visibility: private

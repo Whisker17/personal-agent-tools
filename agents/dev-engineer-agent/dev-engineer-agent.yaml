@@ -1,0 +1,45 @@
+name: dev-engineer-agent
+description: Full-stack implementation engineer — writes application code, tests, and documentation in isolated worktrees for parallel-safe development
+runtime: claude-code
+model: claude-sonnet-4-6
+
+system_instructions: agents/dev-engineer-agent/instructions.md
+
+skills:
+  - agents/dev-engineer-agent/skills/tdd
+
+knowledge: []
+
+parameters:
+  - key: multica_issue_id
+    type: text
+    description: Multica task issue ID to post progress and completion comments on.
+  - key: task_description
+    type: text
+    description: What to implement — scope, acceptance criteria, and technical constraints.
+  - key: repo_path
+    type: text
+    description: Local filesystem path to the target repository.
+  - key: branch_name
+    type: text
+    description: Deterministic branch name for this task. Format dev/{project-slug}/{task-slug}.
+  - key: project_slug
+    type: text
+    description: Stable project identifier.
+  - key: task_slug
+    type: text
+    description: Stable task identifier. Lowercase with hyphens.
+  - key: design_doc_path
+    type: text
+    description: Optional. Path to the design document for architectural context.
+  - key: dependent_branches
+    type: text
+    description: Optional. Comma-separated list of branches this task depends on. Engineer must rebase on these before starting.
+  - key: revision_feedback
+    type: text
+    description: Optional. Structured review feedback from a previous round. When provided, engineer enters revision mode.
+
+max_concurrent_tasks: 3
+custom_env: {}
+custom_args: []
+visibility: private

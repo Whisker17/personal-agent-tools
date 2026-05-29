@@ -1,0 +1,4 @@
+interface:
+  display_name: "Adversarial Review"
+  short_description: "Challenge design risks before shipping"
+  default_prompt: "Use $adversarial-review to challenge this PR's design assumptions and material failure modes."

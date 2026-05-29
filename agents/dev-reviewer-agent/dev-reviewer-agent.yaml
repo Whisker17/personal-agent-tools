@@ -1,0 +1,45 @@
+name: dev-reviewer-agent
+description: Adversarial code reviewer — audits PRs for correctness, security, performance, and test coverage, posts advisory verdicts to Orchestrator
+runtime: codex
+model: gpt-5.5
+
+system_instructions: agents/dev-reviewer-agent/instructions.md
+
+skills:
+  - agents/dev-reviewer-agent/skills/adversarial-review
+
+knowledge: []
+
+parameters:
+  - key: multica_issue_id
+    type: text
+    description: Multica task issue ID to post review verdict on.
+  - key: pr_url
+    type: text
+    description: GitHub pull request URL to review.
+  - key: repo_path
+    type: text
+    description: Local filesystem path to the target repository.
+  - key: branch_name
+    type: text
+    description: Branch name of the PR under review.
+  - key: project_slug
+    type: text
+    description: Stable project identifier.
+  - key: task_slug
+    type: text
+    description: Stable task identifier.
+  - key: review_focus
+    type: text
+    description: Optional. Specific areas to focus review on (e.g., "security", "performance", "api-design").
+  - key: round
+    type: text
+    description: Current review round. Starts at 1, incremented on re-review after revision.
+  - key: design_doc_path
+    type: text
+    description: Optional. Path to the design document for validating implementation against spec.
+
+max_concurrent_tasks: 3
+custom_env: {}
+custom_args: []
+visibility: private
