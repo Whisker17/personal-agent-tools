@@ -78,10 +78,23 @@ DEV_WORKER_POLICY_FILES = [
     "agents/dev-engineer-agent/instructions.md",
     "agents/dev-cc-reviewer-agent/instructions.md",
 ]
+DEV_ENGINEER_POLICY_FILE = "agents/dev-engineer-agent/instructions.md"
+DEV_ORCHESTRATOR_POLICY_FILE = "agents/dev-orchestrator-agent/instructions.md"
 DEV_ORCHESTRATOR_POLICY_GLOBS = [
     "agents/dev-orchestrator-agent/**/*.md",
     "squads/dev-squad/*.md",
 ]
+DEV_FRESH_BASE_TERMS = {
+    "`git fetch --prune origin`": "fresh main fetch",
+    "base_main_sha": "base main SHA variable",
+    "Base main SHA": "Base main SHA reporting",
+    "git merge-base --is-ancestor": "stale base ancestry check",
+    "git rebase origin/main": "stale branch rebase",
+}
+DEV_MERGE_CLEANUP_TERMS = {
+    "git push origin --delete": "remote branch cleanup",
+    "Remote branch deleted": "remote branch cleanup evidence",
+}
 DEV_HANDOFF_TEMPLATE_TITLES = {
     "implementation ready",
     "review verdict",
@@ -493,6 +506,21 @@ def validate_dev_squad_dispatch_policy(root=REPO_ROOT):
                 if needle not in text:
                     errors.append(f"{relpath}: missing {description}")
 
+        if relpath == DEV_ENGINEER_POLICY_FILE:
+            for needle, description in DEV_FRESH_BASE_TERMS.items():
+                if needle not in text:
+                    errors.append(f"{relpath}: missing {description}")
+
+        if relpath == DEV_ORCHESTRATOR_POLICY_FILE:
+            orchestrator_required_terms = {
+                "`git fetch --prune origin`": "fresh main fetch",
+                "Base main SHA": "Base main SHA dispatch evidence",
+                **DEV_MERGE_CLEANUP_TERMS,
+            }
+            for needle, description in orchestrator_required_terms.items():
+                if needle not in text:
+                    errors.append(f"{relpath}: missing {description}")
+
     protocol_path = root / DEV_PROTOCOL_CANONICAL
     if protocol_path.is_file():
         protocol = protocol_path.read_text()
@@ -504,6 +532,8 @@ def validate_dev_squad_dispatch_policy(root=REPO_ROOT):
             "Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})": "worker-to-Orchestrator handoff mention",
             "do not post a Multica issue comment": "silent non-target guard",
             "cancel/no-op": "non-target runtime fallback",
+            **DEV_FRESH_BASE_TERMS,
+            **DEV_MERGE_CLEANUP_TERMS,
         }
         for needle, description in required.items():
             if needle not in protocol:

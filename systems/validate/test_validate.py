@@ -183,6 +183,9 @@ Non-target agents do not post a Multica issue comment; use cancel/no-op if neede
         self.assertTrue(any("Review Verdict" in err and "Target agent" in err for err in errors), errors)
         self.assertTrue(any("Agent Directory" in err and "Dev CC Reviewer" in err for err in errors), errors)
         self.assertTrue(any("legacy dev-reviewer-agent" in err for err in errors), errors)
+        self.assertTrue(any("fresh main fetch" in err for err in errors), errors)
+        self.assertTrue(any("stale base ancestry check" in err for err in errors), errors)
+        self.assertTrue(any("remote branch cleanup" in err for err in errors), errors)
 
     def test_accepts_dev_squad_continuous_handoff_protocol(self):
         with tempfile.TemporaryDirectory() as td:
@@ -227,6 +230,8 @@ Continuous tasks must include exactly one target agent mention link in `Target a
 Worker handoffs to Orchestrator must mention Dev Orchestrator.
 Use `multica issue runs` and comments to resume from the latest actionable state.
 Non-target agents do not post a Multica issue comment and use cancel/no-op if the runtime requires a terminal action.
+Engineer must run `git fetch --prune origin`, record `base_main_sha`, include `Base main SHA`, verify `git merge-base --is-ancestor`, and run `git rebase origin/main` before continuing on a stale branch.
+After merge, Orchestrator must run `git push origin --delete {branch}` and report `Remote branch deleted`.
 
 ## Dispatch: Review
 **Target agent**: [@Dev CC Reviewer](mention://agent/{reviewer-id})
@@ -264,6 +269,7 @@ Read `references/squad-communication-protocol.md` for the full protocol.
                 """
 Build handoff mentions from the Agent Directory.
 Implementation Ready and Revision Complete must contain `Target agent: [@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})`.
+Run `git fetch --prune origin`, record `base_main_sha`, include `Base main SHA`, verify `git merge-base --is-ancestor`, and run `git rebase origin/main` before continuing on a stale branch.
 Before posting, verify exactly one trigger mention is present.
 If this agent is not the target, do not post a Multica issue comment; use cancel/no-op if needed.
 """,
@@ -279,7 +285,10 @@ If this agent is not the target, do not post a Multica issue comment; use cancel
                 encoding="utf-8",
             )
             orchestrator.write_text(
-                "You may dispatch dev-engineer-agent and dev-cc-reviewer-agent. Resume by reading comments and `multica issue runs`.",
+                "You may dispatch dev-engineer-agent and dev-cc-reviewer-agent. "
+                "Before dispatch run `git fetch --prune origin` and include `Base main SHA`. "
+                "After merge run `git push origin --delete {branch}` and report `Remote branch deleted`. "
+                "Resume by reading comments and `multica issue runs`.",
                 encoding="utf-8",
             )
 

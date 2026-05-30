@@ -51,12 +51,16 @@ grep -qxF '.claude/worktrees/' .git/info/exclude 2>/dev/null || echo '.claude/wo
 
 | Phase | Actor | Action |
 |---|---|---|
-| Create | Engineer | `git fetch origin && git worktree add .claude/worktrees/{task-slug} -b dev/{project-slug}/{task-slug} origin/main` |
-| Dependent rebase | Engineer | `git rebase {dependent-branch}` inside worktree (when `dependent_branches` is provided) |
+| Fresh base | Orchestrator | Before dispatch, run `git fetch --prune origin`, resolve `base_main_sha="$(git rev-parse origin/main)"`, and include that SHA in the Dispatch comment |
+| Create | Engineer | Run `git fetch --prune origin`, record `base_main_sha="$(git rev-parse origin/main)"`, then create the worktree with `git worktree add .claude/worktrees/{task-slug} -b dev/{project-slug}/{task-slug} origin/main` |
+| Resume | Engineer | If worktree/branch already exists, run `git fetch --prune origin` and verify `git merge-base --is-ancestor "$base_main_sha" HEAD`; if false, run `git rebase origin/main` before coding |
+| Dependent rebase | Engineer | `git rebase {dependent-branch}` inside worktree (when `dependent_branches` is provided) after verifying the dependency branch itself contains the latest `origin/main` |
 | Work | Engineer | All coding, testing, commits inside worktree |
 | PR | Engineer | Push branch, open PR to `main` |
 | Merge | Orchestrator | Merge PR via GitHub |
-| Cleanup | Orchestrator | `git worktree remove .claude/worktrees/{task-slug}` after merge verified |
+| Cleanup | Orchestrator | After merge is verified, run `git push origin --delete dev/{project-slug}/{task-slug}`, `git fetch --prune origin`, and `git worktree remove .claude/worktrees/{task-slug}` |
+
+The `base_main_sha` in Engineer's handoff must match the latest `origin/main` observed at worktree creation or stale-branch rebase time. If `origin/main` has moved and the branch does not contain it, Engineer must rebase, rerun tests, and only then post `Implementation Ready` or `Revision Complete`.
 
 ### Shared-File Dependency Rule
 
@@ -74,7 +78,7 @@ Orchestrator must keep each task's Multica issue status in sync with the workflo
 |---|---|---|
 | `In Progress` | Dispatch: implementation posted, or Revision Request posted | `multica issue update {issue_id} --status "In Progress"` |
 | `In Review` | Dispatch: review posted | `multica issue update {issue_id} --status "In Review"` |
-| `Done` | PR merged + per-task done gate passed | `multica issue update {issue_id} --status "Done"` |
+| `Done` | PR merged + remote branch deleted + per-task done gate passed | `multica issue update {issue_id} --status "Done"` |
 
 Rules:
 - Update status immediately after posting the triggering comment.
@@ -157,7 +161,7 @@ planned
 | `under-review` | Orchestrator | Dispatch: review posted | `In Review` |
 | `approved` / `revision-requested` | Orchestrator | Reviewer verdict handled | `In Progress` (if revision) |
 | `merged` | Orchestrator | PR merged to `main` | — |
-| `worktree-cleaned` | Orchestrator | Worktree removed after merge verified | — |
+| `worktree-cleaned` | Orchestrator | Remote branch deleted and worktree removed after merge verified | — |
 | `done` | Orchestrator | Done gate passes | `Done` |
 
 Only Orchestrator advances task status. Workers may request status changes but cannot transition states directly.
@@ -175,7 +179,7 @@ Multica continues the workflow only when the next actor is explicitly mentioned 
 
 ## 5. Done Gate
 
-### Per-Task Done Gate (7 items)
+### Per-Task Done Gate (8 items)
 
 A task may transition to `done` only when **all** of the following are true:
 
@@ -184,10 +188,11 @@ A task may transition to `done` only when **all** of the following are true:
 3. Reviewer has posted approval, or Orchestrator posted explicit `accept-risk`.
 4. No unresolved critical finding remains.
 5. PR is merged to `main`.
-6. Worktree is cleaned up (removed).
-7. Orchestrator posted a closing comment on the task issue.
+6. Remote task branch is deleted from `origin`.
+7. Worktree is cleaned up (removed).
+8. Orchestrator posted a closing comment on the task issue.
 
-### Project Done Gate (5 items)
+### Project Done Gate (6 items)
 
 A project is complete when **all** of the following are true:
 
@@ -195,7 +200,8 @@ A project is complete when **all** of the following are true:
 2. `main` branch passes the full test suite.
 3. No open BLOCKED issues remain.
 4. Orchestrator posted a project completion summary on the anchor issue.
-5. All worktrees are cleaned up.
+5. All task branches have been deleted from `origin`.
+6. All worktrees are cleaned up.
 
 ## 6. Emoji Reaction Semantics
 
@@ -229,11 +235,12 @@ Orchestrator provides the complete roster in every Dispatch comment:
 **Project slug**: {project-slug}
 **Task slug**: {task-slug}
 **Branch**: dev/{project-slug}/{task-slug}
+**Base main SHA**: {base_main_sha from `git fetch --prune origin`}
 **Phase**: implementation
 **Round**: 1
 **Target agent**: [@Dev Engineer](mention://agent/{engineer-id})
 **Multica status**: In Progress
-**Next action**: Dev Engineer creates worktree, implements task, opens PR, posts Implementation Ready
+**Next action**: Dev Engineer verifies latest origin/main base, creates or rebases worktree, implements task, opens PR, posts Implementation Ready
 
 **Task description**:
 {scope, acceptance criteria, technical constraints}
@@ -259,6 +266,8 @@ Orchestrator provides the complete roster in every Dispatch comment:
 **Project slug**: {project-slug}
 **Task slug**: {task-slug}
 **Branch**: dev/{project-slug}/{task-slug}
+**Base main SHA**: {base_main_sha used for worktree creation or stale-branch rebase}
+**Base verification**: `git merge-base --is-ancestor {base_main_sha} HEAD` passed after latest `git fetch --prune origin`
 **Phase**: implementation
 **Round**: {n}
 **PR**: {pr_url}
@@ -327,6 +336,7 @@ Orchestrator provides the complete roster in every Dispatch comment:
 **Project slug**: {project-slug}
 **Task slug**: {task-slug}
 **Branch**: dev/{project-slug}/{task-slug}
+**Base main SHA**: {base_main_sha after latest stale-branch check}
 **Phase**: revision
 **Round**: {n} -> {n+1}
 **Multica status**: In Progress
@@ -352,6 +362,8 @@ Orchestrator provides the complete roster in every Dispatch comment:
 **Project slug**: {project-slug}
 **Task slug**: {task-slug}
 **Branch**: dev/{project-slug}/{task-slug}
+**Base main SHA**: {base_main_sha used for revision branch check or rebase}
+**Base verification**: `git merge-base --is-ancestor {base_main_sha} HEAD` passed after latest `git fetch --prune origin`
 **Phase**: revision
 **Round**: {n}
 **PR**: {pr_url}
@@ -375,6 +387,8 @@ Orchestrator provides the complete roster in every Dispatch comment:
 **Phase**: merged
 **PR**: {pr_url}
 **Merge commit**: {sha}
+**Remote branch deleted**: yes (`git push origin --delete dev/{project-slug}/{task-slug}`)
+**Worktree removed**: yes (`git worktree remove .claude/worktrees/{task-slug}`)
 **Review rounds**: {n}
 **Caveats**: {any accepted risks or minor findings, or "none"}
 **Multica status**: Done

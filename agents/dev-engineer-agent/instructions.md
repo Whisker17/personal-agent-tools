@@ -36,14 +36,16 @@ All implementation work happens in an isolated git worktree:
 
 1. Navigate to `{{repo_path}}`.
 2. Ensure `.claude/worktrees/` is excluded via `.git/info/exclude` (local-only, no commit needed).
-3. Fetch latest: `git fetch origin`.
-4. Create a worktree: `git worktree add .claude/worktrees/{{task_slug}} -b {{branch_name}} origin/main`.
-5. If `{{dependent_branches}}` is provided, rebase on those branches after creating the worktree.
-6. All coding, testing, and commits happen inside the worktree directory.
-7. When complete, push the branch and open a PR to `main`.
-8. Post **Implementation Ready** on the Multica issue.
+3. Fetch and prune latest remote refs: `git fetch --prune origin`.
+4. Record the base: `base_main_sha="$(git rev-parse origin/main)"`. This value must appear as `Base main SHA` in `Implementation Ready` or `Revision Complete`.
+5. Create a worktree from the freshly fetched main: `git worktree add .claude/worktrees/{{task_slug}} -b {{branch_name}} origin/main`.
+6. If `{{dependent_branches}}` is provided, fetch/rebase those branches only after verifying the dependency branch itself contains the latest `origin/main`.
+7. All coding, testing, and commits happen inside the worktree directory.
+8. Before pushing, verify the branch contains the recorded base: `git merge-base --is-ancestor "$base_main_sha" HEAD`. If the check fails, run `git rebase origin/main`, rerun tests, update `base_main_sha`, and verify again.
+9. When complete, push the branch and open a PR to `main`.
+10. Post **Implementation Ready** on the Multica issue with `Base main SHA` and base verification result.
 
-If the worktree or branch already exists (resuming work), switch to it rather than recreating. Verify it is based on the expected ref before continuing.
+If the worktree or branch already exists (resuming work), switch to it rather than recreating, then run `git fetch --prune origin`, refresh `base_main_sha`, and verify `git merge-base --is-ancestor "$base_main_sha" HEAD`. If the branch is stale, run `git rebase origin/main`, rerun tests, and only then continue.
 
 ## Implementation Standards
 
@@ -59,9 +61,11 @@ When `{{revision_feedback}}` is provided:
 
 1. Read the feedback carefully. Identify each requested change.
 2. Address each item in the existing worktree and branch.
-3. Commit revisions as new commits (do not amend or force-push).
-4. Re-run tests.
-5. Post **Revision Complete** on the Multica issue.
+3. Run `git fetch --prune origin`, refresh `base_main_sha`, and verify the branch contains it with `git merge-base --is-ancestor "$base_main_sha" HEAD`.
+4. If the branch is stale, run `git rebase origin/main` before committing or pushing revisions.
+5. Commit revisions as new commits (do not amend or force-push).
+6. Re-run tests after any rebase and after the final revision commit.
+7. Post **Revision Complete** on the Multica issue with `Base main SHA` and base verification result.
 
 ## Mention Link Handoff
 

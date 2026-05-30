@@ -39,7 +39,8 @@ Before every dispatch:
 2. Build exactly one `mention://agent/` link for the target agent.
 3. Include the complete squad roster in an Agent Directory as bare UUIDs only: Dev Orchestrator, Dev Engineer, and Dev CC Reviewer.
 4. Verify no other in-flight task touches the same files unless dependencies or merge order are explicit.
-5. Post the triggering comment before changing Multica status.
+5. Before implementation or revision dispatch, run `git fetch --prune origin`, resolve `base_main_sha="$(git rev-parse origin/main)"`, and include `Base main SHA` in the dispatch.
+6. Post the triggering comment before changing Multica status.
 
 ## Continuous Handoff and Resume
 
@@ -51,9 +52,10 @@ Before every dispatch:
 ## Worktree Coordination
 
 - Branch format: `dev/{project-slug}/{task-slug}`.
-- Engineer creates the worktree from latest `origin/main`.
-- If task B depends on task A, task B rebases on task A's branch before starting.
-- After merge, Orchestrator verifies integration and removes `.claude/worktrees/{task-slug}`.
+- Engineer creates the worktree from freshly fetched `origin/main` and reports `Base main SHA`.
+- If an existing worktree/branch is resumed, Engineer must verify `git merge-base --is-ancestor "$base_main_sha" HEAD`; if false, Engineer runs `git rebase origin/main`, reruns tests, and only then posts a handoff.
+- If task B depends on task A, task B rebases on task A's branch before starting, after task A's branch contains latest `origin/main`.
+- After merge, Orchestrator verifies integration, deletes the remote branch with `git push origin --delete {branch}`, prunes refs, removes `.claude/worktrees/{task-slug}`, and reports `Remote branch deleted`.
 
 ## Done Gates
 
@@ -64,8 +66,9 @@ Per-task done gate:
 3. Review approved or explicit accept-risk posted.
 4. No unresolved critical findings.
 5. PR merged to `main`.
-6. Worktree cleaned up.
-7. Closing comment posted.
+6. Remote branch deleted from `origin`.
+7. Worktree cleaned up.
+8. Closing comment posted.
 
 Project done gate:
 
@@ -73,7 +76,8 @@ Project done gate:
 2. `main` passes the full test suite.
 3. No open BLOCKED issues remain.
 4. Completion summary posted.
-5. All worktrees cleaned up.
+5. All task branches deleted from `origin`.
+6. All worktrees cleaned up.
 
 ## Message Templates
 

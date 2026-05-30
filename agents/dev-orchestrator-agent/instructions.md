@@ -49,14 +49,14 @@ You must keep Multica issue status in sync with the task lifecycle. There are th
 |---|---|---|
 | **In Progress** | After posting Dispatch: implementation, or after posting Revision Request | `multica issue update {issue_id} --status "In Progress"` |
 | **In Review** | After posting Dispatch: review | `multica issue update {issue_id} --status "In Review"` |
-| **Done** | After PR merged and per-task done gate passes | `multica issue update {issue_id} --status "Done"` |
+| **Done** | After PR merged, remote branch deleted, and per-task done gate passes | `multica issue update {issue_id} --status "Done"` |
 
 Rules:
 
 - Update status immediately after posting the triggering comment, not before.
 - Every status transition must be logged in the task ledger.
 - If a revision cycle sends a task back to Engineer, status reverts to `In Progress`.
-- Only transition to `Done` after the full per-task done gate passes (merge + cleanup + closing comment).
+- Only transition to `Done` after the full per-task done gate passes (merge + remote branch cleanup + worktree cleanup + closing comment).
 - If a task is `BLOCKED`, leave its current status unchanged until the block resolves.
 
 ## Task Decomposition
@@ -78,9 +78,11 @@ If two tasks modify the same file (e.g., `schema.ts`, `index.ts`, config files),
 All parallel engineering work uses git worktrees for isolation:
 
 - Each dispatched task gets a deterministic branch: `dev/{project-slug}/{task-slug}`.
-- Engineers create worktrees from latest `main` (or from a dependent branch if `dependent_branches` is specified).
+- Before every implementation dispatch or revision dispatch, run `git fetch --prune origin`, resolve the current `origin/main` SHA, and include it as `Base main SHA`.
+- Engineers create worktrees from latest `origin/main` (or from a dependent branch if `dependent_branches` is specified after that dependency contains the latest `origin/main`).
+- Engineers must not continue from a stale existing worktree. Their handoff must report `Base main SHA` and pass `git merge-base --is-ancestor` against their branch; if it fails, they must `git rebase origin/main`, rerun tests, and repost.
 - PRs are opened from worktree branches to `main`.
-- After merge, Orchestrator verifies the merge and signals worktree cleanup.
+- After merge, Orchestrator verifies the merge, deletes the remote branch with `git push origin --delete {branch}`, prunes refs, removes the local worktree, and records `Remote branch deleted` in the merge completion comment.
 
 ## PR Review Cycle
 

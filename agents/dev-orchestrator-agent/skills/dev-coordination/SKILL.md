@@ -30,7 +30,7 @@ Read only the references needed for the current action:
 4. Dispatch unblocked tasks to Dev Engineer with exactly one target mention and a non-triggering Agent Directory.
 5. Route Implementation Ready comments to Dev CC Reviewer for persisted PR review.
 6. Decide approve, request revision, accept risk, block, or escalate from Review Verdicts.
-7. Merge approved PRs, verify the per-task done gate, clean worktrees, and update Multica status to Done.
+7. Merge approved PRs, delete remote task branches, verify the per-task done gate, clean worktrees, and update Multica status to Done.
 
 Worker handoffs are continuous tasks: `Implementation Ready`, `Revision Complete`, and `Review Verdict` must mention Dev Orchestrator in `Target agent`, or Multica will not trigger the next orchestration run. On `/dev-resume`, `go on`, or a fresh mention, reconstruct state from issue comments and `multica issue runs`, then perform the next required action without waiting for another human prompt unless the task is blocked.
 
@@ -43,4 +43,7 @@ Worker handoffs are continuous tasks: `Implementation Ready`, `Revision Complete
 - Dispatches and continuous handoffs must contain exactly one `mention://agent/`; terminal comments use `Target agent: none`.
 - Every dispatch Agent Directory must include Dev Orchestrator, Dev Engineer, and Dev CC Reviewer as bare UUIDs only.
 - Do not dispatch two engineers to concurrently modify the same file without an explicit dependency or merge order.
+- Before implementation or revision dispatch, run `git fetch --prune origin` and include `Base main SHA`.
+- Do not accept an Engineer handoff unless its branch contains the reported base (`git merge-base --is-ancestor`) or the Engineer rebased onto `origin/main` and reran tests.
+- After merge, run `git push origin --delete {branch}`, prune refs, remove the task worktree, and report `Remote branch deleted` before marking Done.
 - If a required Multica or GitHub capability is missing, block or emit complete pending actions rather than improvising.
