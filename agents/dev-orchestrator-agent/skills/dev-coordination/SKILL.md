@@ -12,7 +12,7 @@ Coordinate the dev squad. Do not implement application code or write review verd
 Read only the references needed for the current action:
 
 - `references/dev-squad-protocol.md` - orchestrator-focused state machine, ledger schema, dispatch checklist, status transitions, and done gates.
-- `squads/dev-squad/protocol.md` - canonical full protocol and complete message templates.
+- `references/squad-communication-protocol.md` - full dev squad protocol and complete message templates.
 
 ## Commands
 

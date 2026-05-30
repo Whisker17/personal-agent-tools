@@ -191,11 +191,22 @@ Non-target agents do not post a Multica issue comment; use cancel/no-op if neede
             engineer = root / "agents" / "dev-engineer-agent" / "instructions.md"
             reviewer = root / "agents" / "dev-cc-reviewer-agent" / "instructions.md"
             orchestrator = root / "agents" / "dev-orchestrator-agent" / "instructions.md"
+            dev_skill = root / "agents" / "dev-orchestrator-agent" / "skills" / "dev-coordination" / "SKILL.md"
+            dev_protocol_copy = (
+                root
+                / "agents"
+                / "dev-orchestrator-agent"
+                / "skills"
+                / "dev-coordination"
+                / "references"
+                / "squad-communication-protocol.md"
+            )
             squad_yaml = root / "squads" / "dev-squad" / "squad.yaml"
             protocol.parent.mkdir(parents=True)
             engineer.parent.mkdir(parents=True)
             reviewer.parent.mkdir(parents=True)
             orchestrator.parent.mkdir(parents=True)
+            dev_protocol_copy.parent.mkdir(parents=True)
             squad_yaml.write_text(
                 """
 name: dev-squad
@@ -240,6 +251,15 @@ Non-target agents do not post a Multica issue comment and use cancel/no-op if th
 """,
                 encoding="utf-8",
             )
+            dev_protocol_copy.write_text(protocol.read_text(), encoding="utf-8")
+            dev_skill.write_text(
+                """
+# Dev Coordination
+
+Read `references/squad-communication-protocol.md` for the full protocol.
+""",
+                encoding="utf-8",
+            )
             engineer.write_text(
                 """
 Build handoff mentions from the Agent Directory.
@@ -266,6 +286,34 @@ If this agent is not the target, do not post a Multica issue comment; use cancel
             errors = validate.validate_dev_squad_dispatch_policy(root)
 
         self.assertEqual([], errors)
+
+    def test_rejects_dev_skill_reference_to_unuploaded_squad_protocol_or_stale_copy(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            protocol = root / "squads" / "dev-squad" / "protocol.md"
+            dev_skill = root / "agents" / "dev-orchestrator-agent" / "skills" / "dev-coordination" / "SKILL.md"
+            dev_protocol_copy = (
+                root
+                / "agents"
+                / "dev-orchestrator-agent"
+                / "skills"
+                / "dev-coordination"
+                / "references"
+                / "squad-communication-protocol.md"
+            )
+            protocol.parent.mkdir(parents=True)
+            dev_protocol_copy.parent.mkdir(parents=True)
+            protocol.write_text("Multica, not Linear.\nContinuous Handoff.\n", encoding="utf-8")
+            dev_protocol_copy.write_text("stale copy\n", encoding="utf-8")
+            dev_skill.write_text(
+                "Read `squads/dev-squad/protocol.md` for complete message templates.",
+                encoding="utf-8",
+            )
+
+            errors = validate.validate_dev_squad_dispatch_policy(root)
+
+        self.assertTrue(any("must reference references/squad-communication-protocol.md" in err for err in errors), errors)
+        self.assertTrue(any("dev protocol copy differs" in err for err in errors), errors)
 
 
 if __name__ == "__main__":

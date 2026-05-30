@@ -1,6 +1,6 @@
 # Dev Squad Protocol Reference (Orchestrator View)
 
-Role-specific excerpt of `squads/dev-squad/protocol.md`. This is not a verbatim copy; it contains the subset relevant to Dev Orchestrator operations.
+Role-specific excerpt of `references/squad-communication-protocol.md`. This is not a verbatim copy; it contains the subset relevant to Dev Orchestrator operations.
 
 ## State Machine
 
@@ -77,7 +77,7 @@ Project done gate:
 
 ## Message Templates
 
-Use the complete templates from `squads/dev-squad/protocol.md` Section 7:
+Use the complete templates from `references/squad-communication-protocol.md` Section 7:
 
 - 7.1 Dispatch: Implementation
 - 7.2 Implementation Ready

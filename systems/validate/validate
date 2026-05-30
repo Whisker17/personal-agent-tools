@@ -26,7 +26,13 @@ LEGACY_FIELDS = {
 }
 GITHUB_REF_PATTERN = re.compile(r"^github:[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$")
 NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$")
-PROTOCOL_COPY_GLOB = "agents/*/skills/*/references/squad-communication-protocol.md"
+PROTOCOL_COPY_GLOBS = [
+    "agents/project-orchestrator-agent/skills/*/references/squad-communication-protocol.md",
+    "agents/project-planner-agent/skills/*/references/squad-communication-protocol.md",
+    "agents/research-agent/skills/*/references/squad-communication-protocol.md",
+    "agents/research-adversarial-agent/skills/*/references/squad-communication-protocol.md",
+    "agents/technical-writer-agent/skills/*/references/squad-communication-protocol.md",
+]
 PROTOCOL_CANONICAL = "squads/research-squad/protocol.md"
 RESEARCH_SQUAD_CONFIG = "squads/research-squad/squad.yaml"
 RESEARCH_POLICY_GLOBS = [
@@ -57,6 +63,11 @@ FORBIDDEN_RESEARCH_POLICY_TERMS = [
 ]
 DEV_SQUAD_CONFIG = "squads/dev-squad/squad.yaml"
 DEV_PROTOCOL_CANONICAL = "squads/dev-squad/protocol.md"
+DEV_PROTOCOL_COPY = (
+    "agents/dev-orchestrator-agent/skills/dev-coordination/references/"
+    "squad-communication-protocol.md"
+)
+DEV_COORDINATION_SKILL = "agents/dev-orchestrator-agent/skills/dev-coordination/SKILL.md"
 DEV_POLICY_GLOBS = [
     "squads/dev-squad/*.md",
     "agents/dev-orchestrator-agent/**/*.md",
@@ -269,7 +280,10 @@ def validate_protocol_copies():
                 errors.append(f"squad.yaml protocol must be {PROTOCOL_CANONICAL}")
 
     canonical_text = canonical.read_text()
-    copies = sorted(REPO_ROOT.glob(PROTOCOL_COPY_GLOB))
+    copies = []
+    for pattern in PROTOCOL_COPY_GLOBS:
+        copies.extend(REPO_ROOT.glob(pattern))
+    copies = sorted(set(copies))
     if len(copies) != 6:
         errors.append(f"Expected 6 protocol copies under agent skills, found {len(copies)}")
     for copy_path in copies:
@@ -511,6 +525,22 @@ def validate_dev_squad_dispatch_policy(root=REPO_ROOT):
                     errors.append(f"{DEV_PROTOCOL_CANONICAL}: {title} must hand off to Dev Orchestrator")
                 if body.count("mention://agent/") != 1:
                     errors.append(f"{DEV_PROTOCOL_CANONICAL}: {title} must contain exactly one trigger mention")
+
+    copy_path = root / DEV_PROTOCOL_COPY
+    if not copy_path.is_file():
+        errors.append(f"Missing dev protocol copy: {DEV_PROTOCOL_COPY}")
+    elif protocol_path.is_file() and copy_path.read_text() != protocol_path.read_text():
+        errors.append(f"{DEV_PROTOCOL_COPY}: dev protocol copy differs from {DEV_PROTOCOL_CANONICAL}")
+
+    skill_path = root / DEV_COORDINATION_SKILL
+    if skill_path.is_file():
+        skill_text = skill_path.read_text()
+        if "squads/dev-squad/protocol.md" in skill_text:
+            errors.append(
+                f"{DEV_COORDINATION_SKILL}: must reference references/squad-communication-protocol.md, not squads/dev-squad/protocol.md"
+            )
+        if "references/squad-communication-protocol.md" not in skill_text:
+            errors.append(f"{DEV_COORDINATION_SKILL}: missing local full protocol reference")
 
     return errors
 
