@@ -1,6 +1,6 @@
 ---
 name: dev-coordination
-description: "Use when coordinating a Multica dev squad project: decomposing requirements into implementation tasks, maintaining the task ledger, dispatching Dev Engineer and Dev Reviewer, managing PR review/revision rounds, gating merges, tracking Multica status, and closing tasks through done gates."
+description: "Use when coordinating a Multica dev squad project: decomposing requirements into implementation tasks, maintaining the task ledger, dispatching Dev Engineer and Dev CC Reviewer, managing PR review/revision rounds, gating merges, tracking Multica status, and closing tasks through done gates."
 ---
 
 # Dev Coordination
@@ -28,9 +28,11 @@ Read only the references needed for the current action:
 2. Decompose implementation work into task issues with acceptance criteria, likely touched files, branch name, and dependencies.
 3. Maintain a task ledger on the anchor issue.
 4. Dispatch unblocked tasks to Dev Engineer with exactly one target mention and a non-triggering Agent Directory.
-5. Route Implementation Ready comments to Dev Reviewer for persisted PR review.
+5. Route Implementation Ready comments to Dev CC Reviewer for persisted PR review.
 6. Decide approve, request revision, accept risk, block, or escalate from Review Verdicts.
 7. Merge approved PRs, verify the per-task done gate, clean worktrees, and update Multica status to Done.
+
+Worker handoffs are continuous tasks: `Implementation Ready`, `Revision Complete`, and `Review Verdict` must mention Dev Orchestrator in `Target agent`, or Multica will not trigger the next orchestration run. On `/dev-resume`, `go on`, or a fresh mention, reconstruct state from issue comments and `multica issue runs`, then perform the next required action without waiting for another human prompt unless the task is blocked.
 
 ## Non-Negotiables
 
@@ -38,5 +40,7 @@ Read only the references needed for the current action:
 - Orchestrator is the only Multica issue status-transition authority.
 - Engineer and Reviewer never coordinate directly.
 - Every decision must be recoverable from issue comments plus the task ledger.
+- Dispatches and continuous handoffs must contain exactly one `mention://agent/`; terminal comments use `Target agent: none`.
+- Every dispatch Agent Directory must include Dev Orchestrator, Dev Engineer, and Dev CC Reviewer as bare UUIDs only.
 - Do not dispatch two engineers to concurrently modify the same file without an explicit dependency or merge order.
 - If a required Multica or GitHub capability is missing, block or emit complete pending actions rather than improvising.

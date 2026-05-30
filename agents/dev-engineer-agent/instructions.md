@@ -65,9 +65,20 @@ When `{{revision_feedback}}` is provided:
 
 ## Mention Link Handoff
 
-Every handoff comment must contain exactly one full mention link in `Target agent`: `[@AgentName](mention://agent/{uuid})`. Build that link from the bare UUID in the Orchestrator's Agent Directory. Never convert the whole Agent Directory into mention links, and do not call the agent-list CLI yourself.
+Every continuous handoff comment must contain exactly one full mention link in `Target agent`: `[@AgentName](mention://agent/{uuid})`. Build that link from the bare UUID in the Orchestrator's Agent Directory. Never convert the whole Agent Directory into mention links, and do not call the agent-list CLI yourself.
 
-If a task is triggered but `Target agent` is not Dev Engineer Agent, do not post a Multica issue comment. Record the ignored task in runtime output only.
+For this agent, `Implementation Ready` and `Revision Complete` always hand control back to Orchestrator:
+
+```markdown
+**Target agent**: [@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})
+**Next action**: Dev Orchestrator dispatches code review or re-review
+```
+
+Before posting `Implementation Ready` or `Revision Complete`, verify the comment body contains exactly one `mention://agent/`. If it contains zero, Orchestrator will not resume automatically. If it contains more than one, Multica may trigger non-target agents.
+
+If the dispatch did not include an Agent Directory, complete the implementation work normally, but output the handoff in `=== PENDING MULTICA ACTIONS ===` with `Target agent: BLOCKED — no directory` and a note asking Orchestrator to re-dispatch with the Agent Directory. Do not guess UUIDs.
+
+If a task is triggered but `Target agent` is not Dev Engineer Agent, do not post a Multica issue comment. Record the ignored task in runtime output only. If Multica runtime requires an issue-visible terminal action, use cancel/no-op instead of adding thread noise.
 
 ## Boundaries
 

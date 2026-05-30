@@ -120,5 +120,153 @@ If runtime requires an issue-visible result, use cancel/no-op.
         self.assertEqual([], errors)
 
 
+class DevSquadDispatchPolicyTests(unittest.TestCase):
+    def test_rejects_worker_handoffs_without_orchestrator_mentions_and_legacy_reviewer(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            protocol = root / "squads" / "dev-squad" / "protocol.md"
+            engineer = root / "agents" / "dev-engineer-agent" / "instructions.md"
+            reviewer = root / "agents" / "dev-cc-reviewer-agent" / "instructions.md"
+            orchestrator = root / "agents" / "dev-orchestrator-agent" / "instructions.md"
+            squad_yaml = root / "squads" / "dev-squad" / "squad.yaml"
+            protocol.parent.mkdir(parents=True)
+            engineer.parent.mkdir(parents=True)
+            reviewer.parent.mkdir(parents=True)
+            orchestrator.parent.mkdir(parents=True)
+            squad_yaml.write_text(
+                """
+name: dev-squad
+members:
+  orchestrator: agents/dev-orchestrator-agent
+  engineer: agents/dev-engineer-agent
+  reviewer: agents/dev-reviewer-agent
+protocol: squads/dev-squad/protocol.md
+""",
+                encoding="utf-8",
+            )
+            protocol.write_text(
+                """
+Multica, not Linear.
+Continuous Handoff requires exactly one trigger mention.
+Use `multica issue runs` during resume.
+Dev CC Reviewer is the reviewer.
+Non-target agents do not post a Multica issue comment; use cancel/no-op if needed.
+
+```markdown
+## Dispatch: Review
+**Target agent**: [@dev-reviewer-agent](mention://agent/{reviewer-id})
+**Next action**: dev-reviewer-agent reviews the PR.
+
+**Agent Directory**:
+- dev-orchestrator: `{orchestrator-id}`
+- dev-engineer: `{engineer-id}`
+
+## Implementation Ready
+**PR**: {pr_url}
+**Next action**: Orchestrator dispatches code review
+
+## Review Verdict
+**Recommendation**: approve
+**Next action**: Orchestrator merges PR
+```
+""",
+                encoding="utf-8",
+            )
+            engineer.write_text("Post Implementation Ready when done.", encoding="utf-8")
+            reviewer.write_text("Post Review Verdict when done.", encoding="utf-8")
+            orchestrator.write_text("You may dispatch dev-engineer-agent and dev-reviewer-agent.", encoding="utf-8")
+
+            errors = validate.validate_dev_squad_dispatch_policy(root)
+
+        self.assertTrue(any("dev-cc-reviewer-agent" in err for err in errors), errors)
+        self.assertTrue(any("Implementation Ready" in err and "Target agent" in err for err in errors), errors)
+        self.assertTrue(any("Review Verdict" in err and "Target agent" in err for err in errors), errors)
+        self.assertTrue(any("Agent Directory" in err and "Dev CC Reviewer" in err for err in errors), errors)
+        self.assertTrue(any("legacy dev-reviewer-agent" in err for err in errors), errors)
+
+    def test_accepts_dev_squad_continuous_handoff_protocol(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            protocol = root / "squads" / "dev-squad" / "protocol.md"
+            engineer = root / "agents" / "dev-engineer-agent" / "instructions.md"
+            reviewer = root / "agents" / "dev-cc-reviewer-agent" / "instructions.md"
+            orchestrator = root / "agents" / "dev-orchestrator-agent" / "instructions.md"
+            squad_yaml = root / "squads" / "dev-squad" / "squad.yaml"
+            protocol.parent.mkdir(parents=True)
+            engineer.parent.mkdir(parents=True)
+            reviewer.parent.mkdir(parents=True)
+            orchestrator.parent.mkdir(parents=True)
+            squad_yaml.write_text(
+                """
+name: dev-squad
+members:
+  orchestrator: agents/dev-orchestrator-agent
+  engineer: agents/dev-engineer-agent
+  reviewer: agents/dev-cc-reviewer-agent
+protocol: squads/dev-squad/protocol.md
+""",
+                encoding="utf-8",
+            )
+            protocol.write_text(
+                """
+Multica, not Linear.
+
+## Continuous Handoff
+Continuous tasks must include exactly one target agent mention link in `Target agent`.
+Worker handoffs to Orchestrator must mention Dev Orchestrator.
+Use `multica issue runs` and comments to resume from the latest actionable state.
+Non-target agents do not post a Multica issue comment and use cancel/no-op if the runtime requires a terminal action.
+
+## Dispatch: Review
+**Target agent**: [@Dev CC Reviewer](mention://agent/{reviewer-id})
+**Next action**: Dev CC Reviewer reviews the PR.
+
+**Agent Directory**:
+- Dev Orchestrator: `{orchestrator-id}`
+- Dev Engineer: `{engineer-id}`
+- Dev CC Reviewer: `{reviewer-id}`
+
+## Implementation Ready
+**Target agent**: [@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})
+**Next action**: Dev Orchestrator dispatches code review
+
+## Review Verdict
+**Target agent**: [@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})
+**Next action**: Dev Orchestrator merges PR or dispatches revision
+
+## Revision Complete
+**Target agent**: [@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})
+**Next action**: Dev Orchestrator dispatches re-review
+""",
+                encoding="utf-8",
+            )
+            engineer.write_text(
+                """
+Build handoff mentions from the Agent Directory.
+Implementation Ready and Revision Complete must contain `Target agent: [@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})`.
+Before posting, verify exactly one trigger mention is present.
+If this agent is not the target, do not post a Multica issue comment; use cancel/no-op if needed.
+""",
+                encoding="utf-8",
+            )
+            reviewer.write_text(
+                """
+Build handoff mentions from the Agent Directory.
+Review Verdict must contain `Target agent: [@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})`.
+Before posting, verify exactly one trigger mention is present.
+If this agent is not the target, do not post a Multica issue comment; use cancel/no-op if needed.
+""",
+                encoding="utf-8",
+            )
+            orchestrator.write_text(
+                "You may dispatch dev-engineer-agent and dev-cc-reviewer-agent. Resume by reading comments and `multica issue runs`.",
+                encoding="utf-8",
+            )
+
+            errors = validate.validate_dev_squad_dispatch_policy(root)
+
+        self.assertEqual([], errors)
+
+
 if __name__ == "__main__":
     unittest.main()

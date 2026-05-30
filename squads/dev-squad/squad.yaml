@@ -1,8 +1,8 @@
 name: dev-squad
-description: Three-agent dev squad for iterative software development with worktree-based parallel isolation
+description: Dev squad for iterative software development with worktree-based parallel isolation
 members:
   orchestrator: agents/dev-orchestrator-agent
   engineer: agents/dev-engineer-agent
-  reviewer: agents/dev-reviewer-agent
+  reviewer: agents/dev-cc-reviewer-agent
 coordination: orchestrator-driven
 protocol: squads/dev-squad/protocol.md

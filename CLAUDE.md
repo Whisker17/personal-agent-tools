@@ -90,7 +90,8 @@ When adding or updating an agent:
 
 - `dev-orchestrator-agent` - Decomposes requirements, dispatches engineers, manages PR lifecycle, gates merges
 - `dev-engineer-agent` - Full-stack implementation in isolated worktrees, opens PRs for review
-- `dev-reviewer-agent` - Adversarial code review for correctness, security, performance, test coverage
+- `dev-reviewer-agent` - Adversarial code review via Codex runtime (GPT-5.5)
+- `dev-cc-reviewer-agent` - Claude-based reviewer with Codex adversarial-review delegation, worktree-isolated for parallel execution
 
 ### Standalone
 
@@ -99,7 +100,7 @@ When adding or updating an agent:
 ## Current Squads
 
 - `research-squad` - Four-agent runtime research squad (orchestrator, researcher, adversarial, writer)
-- `dev-squad` - Three-agent dev squad with worktree-based parallel isolation (orchestrator, engineer, reviewer)
+- `dev-squad` - Dev squad with worktree-based parallel isolation (orchestrator, engineer, cc-reviewer; legacy codex reviewer available)
 
 ## Skill Routing
 

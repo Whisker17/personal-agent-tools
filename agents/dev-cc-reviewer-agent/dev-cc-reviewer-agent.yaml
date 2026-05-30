@@ -1,0 +1,44 @@
+name: dev-cc-reviewer-agent
+description: Claude-based code reviewer — runs structural review natively and delegates adversarial review to Codex via /codex:adversarial-review for multi-model coverage
+runtime: claude-code
+model: claude-sonnet-4-6
+
+system_instructions: agents/dev-cc-reviewer-agent/instructions.md
+
+skills: []
+
+knowledge: []
+
+parameters:
+  - key: multica_issue_id
+    type: text
+    description: Multica task issue ID to post review verdict on.
+  - key: pr_url
+    type: text
+    description: GitHub pull request URL to review.
+  - key: repo_path
+    type: text
+    description: Local filesystem path to the target repository.
+  - key: branch_name
+    type: text
+    description: Branch name of the PR under review.
+  - key: project_slug
+    type: text
+    description: Stable project identifier.
+  - key: task_slug
+    type: text
+    description: Stable task identifier.
+  - key: review_focus
+    type: text
+    description: Optional. Specific areas to focus review on (e.g., "security", "performance", "api-design").
+  - key: round
+    type: text
+    description: Current review round. Starts at 1, incremented on re-review after revision.
+  - key: design_doc_path
+    type: text
+    description: Optional. Path to the design document for validating implementation against spec.
+
+max_concurrent_tasks: 3
+custom_env: {}
+custom_args: []
+visibility: private

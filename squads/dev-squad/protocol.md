@@ -2,17 +2,17 @@
 
 > **Document type**: Human reference. This file is not read by agents at runtime. Each agent prompt embeds its own role-specific subset of this protocol.
 >
-> **Last updated**: 2026-05-29
+> **Last updated**: 2026-05-30
 
 ## 1. Scope and Runtime Boundary
 
-This protocol governs inter-agent coordination for the three runtime dev squad agents running on **Multica**.
+This protocol governs inter-agent coordination for the three runtime dev squad agents running on **Multica**. Linear issues and GitHub PRs are external mirrors or delivery surfaces only. All runtime issue IDs, comments, @mentions, reactions, task runs, and status transitions in this document refer to **Multica, not Linear**.
 
 | Agent | Role |
 |---|---|
 | **Dev Orchestrator** | Decomposes requirements, dispatches work, owns state transitions, merges PRs |
 | **Dev Engineer** | Implements features, writes tests, opens PRs in isolated worktrees |
-| **Dev Reviewer** | Adversarially reviews PRs, posts advisory verdicts |
+| **Dev CC Reviewer** | Adversarially reviews PRs via Claude structural + Codex adversarial review, posts advisory verdicts |
 
 ## 2. Repository and Branch Convention
 
@@ -120,7 +120,7 @@ Workers must never call `multica agent list`. Agent UUIDs come from the Orchestr
 | Channel | Purpose | Notes |
 |---|---|---|
 | **Multica issue comments** | Primary channel for dispatches, updates, review feedback, blockers, and completion reports | All structured messages use the templates in Section 7 |
-| **@mentions** | Trigger the receiving agent to act | Dispatch and handoff comments must contain exactly one Multica mention link |
+| **@mentions** | Trigger the receiving agent to act | Dispatch and continuous handoff comments must contain exactly one Multica mention link. Plain text `@AgentName` does not trigger a task. |
 | **Emoji reactions** | Orchestrator acknowledges messages | Reactions never replace decision comments |
 | **GitHub PRs** | Code delivery and review | Referenced from comments by URL |
 
@@ -162,6 +162,17 @@ planned
 
 Only Orchestrator advances task status. Workers may request status changes but cannot transition states directly.
 
+### Continuous Handoff and Resume
+
+Multica continues the workflow only when the next actor is explicitly mentioned in the issue thread. A worker's final chat output is not enough; the worker must post the structured issue comment that mentions the next target.
+
+- **Continuous worker handoffs**: `Implementation Ready`, `Revision Complete`, and `Review Verdict` must include exactly one full target-agent mention link in `Target agent`, and that link must point to `Dev Orchestrator`: `[@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})`.
+- **Dispatches**: `Dispatch: implementation`, `Dispatch: review`, and `Revision Request` must include exactly one full target-agent mention link in `Target agent`, pointing to the worker being dispatched.
+- **Terminal comments**: `Merge Complete`, `BLOCKED`, and project completion comments do not include an agent mention. Use `Target agent: none`.
+- **Handoff self-check**: before posting any continuous handoff or dispatch, verify the comment body contains exactly one `mention://agent/`. If it contains zero, the workflow will stall. If it contains more than one, Multica may trigger non-target agents.
+- **Non-target guard**: if an agent task is triggered but the comment's `Target agent` is another agent, do not post a Multica issue comment. Record the ignored task only in runtime output. If Multica runtime requires an issue-visible terminal action, use the platform's cancel/no-op mechanism rather than writing "not for me" noise into the issue thread.
+- **Resume rule**: when Orchestrator is invoked by `/dev-resume`, `go on`, a fresh mention, or a worker handoff, it must reconstruct state from `multica issue comment list {issue_id}` and `multica issue runs {issue_id}` sorted by `created_at`, then perform the next required action without waiting for human confirmation unless a `BLOCKED` state or missing capability requires it.
+
 ## 5. Done Gate
 
 ### Per-Task Done Gate (7 items)
@@ -200,13 +211,13 @@ Every message comment must include: `issue_id`, `project_slug`, `task_slug`, `ph
 
 ### Agent Directory
 
-Orchestrator provides the roster in every Dispatch comment:
+Orchestrator provides the complete roster in every Dispatch comment:
 
 ```markdown
-**Agent Directory** (non-triggering, for handoff construction):
+**Agent Directory** (non-triggering, for handoff construction; bare UUIDs only):
 - Dev Orchestrator: `{orchestrator-id}`
 - Dev Engineer: `{engineer-id}`
-- Dev Reviewer: `{reviewer-id}`
+- Dev CC Reviewer: `{reviewer-id}`
 ```
 
 ### 7.1 Dispatch: Implementation
@@ -236,7 +247,7 @@ Orchestrator provides the roster in every Dispatch comment:
 **Agent Directory** (non-triggering, for handoff construction):
 - Dev Orchestrator: `{orchestrator-id}`
 - Dev Engineer: `{engineer-id}`
-- Dev Reviewer: `{reviewer-id}`
+- Dev CC Reviewer: `{reviewer-id}`
 ```
 
 ### 7.2 Implementation Ready
@@ -255,7 +266,7 @@ Orchestrator provides the roster in every Dispatch comment:
 **Tests**: {pass | fail — detail if fail}
 **Summary**: {1-2 sentences on what was implemented}
 **Target agent**: [@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})
-**Next action**: Orchestrator dispatches code review
+**Next action**: Dev Orchestrator dispatches code review
 ```
 
 ### 7.3 Dispatch: Review
@@ -271,8 +282,8 @@ Orchestrator provides the roster in every Dispatch comment:
 **Round**: {n}
 **PR**: {pr_url}
 **Multica status**: In Review
-**Target agent**: [@Dev Reviewer](mention://agent/{reviewer-id})
-**Next action**: Dev Reviewer reviews PR and posts Review Verdict
+**Target agent**: [@Dev CC Reviewer](mention://agent/{reviewer-id})
+**Next action**: Dev CC Reviewer reviews PR and posts Review Verdict
 
 **Review focus**: {areas to focus on, or "general"}
 **Design doc**: {path, or "none"}
@@ -280,7 +291,7 @@ Orchestrator provides the roster in every Dispatch comment:
 **Agent Directory** (non-triggering, for handoff construction):
 - Dev Orchestrator: `{orchestrator-id}`
 - Dev Engineer: `{engineer-id}`
-- Dev Reviewer: `{reviewer-id}`
+- Dev CC Reviewer: `{reviewer-id}`
 ```
 
 ### 7.4 Review Verdict
@@ -304,7 +315,7 @@ Orchestrator provides the roster in every Dispatch comment:
 - [{severity}] [{lens}] {file}:{line} — {challenge}. Alternative: {alternative}.
 
 **Target agent**: [@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})
-**Next action**: Orchestrator {merges PR | dispatches revision to Engineer}
+**Next action**: Dev Orchestrator {merges PR | dispatches revision to Engineer}
 ```
 
 ### 7.5 Revision Request
@@ -329,7 +340,7 @@ Orchestrator provides the roster in every Dispatch comment:
 **Agent Directory** (non-triggering, for handoff construction):
 - Dev Orchestrator: `{orchestrator-id}`
 - Dev Engineer: `{engineer-id}`
-- Dev Reviewer: `{reviewer-id}`
+- Dev CC Reviewer: `{reviewer-id}`
 ```
 
 ### 7.6 Revision Complete
@@ -349,7 +360,7 @@ Orchestrator provides the roster in every Dispatch comment:
 - {change 2}: {how addressed}
 **Tests**: {pass | fail}
 **Target agent**: [@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})
-**Next action**: Orchestrator dispatches re-review
+**Next action**: Dev Orchestrator dispatches re-review
 ```
 
 ### 7.7 Merge Complete

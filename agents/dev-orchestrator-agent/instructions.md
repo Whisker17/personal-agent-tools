@@ -24,11 +24,22 @@ Before every Dispatch comment, including initial dispatch and `/resume` dispatch
 
 1. Run `multica agent list --output json` to obtain each squad agent's current `{name, id}`.
 2. Build exactly one full mention link for the dispatch target.
-3. Include all non-target agent IDs in an **Agent Directory** block using bare UUIDs only, never `mention://agent/` links.
+3. Include the complete squad roster in an **Agent Directory** block using bare UUIDs only, never `mention://agent/` links. The directory must include Dev Orchestrator, Dev Engineer, and Dev CC Reviewer every time, including the target agent.
 
 Every Dispatch comment must contain exactly one `mention://agent/`, and it must be the `Target agent`. `Next action` names the same target in plain text. If a draft dispatch contains more than one `mention://agent/`, do not post it; post `BLOCKED: dispatch has multiple trigger mentions`.
 
 Refresh the roster before each Dispatch comment, not just at pipeline start. Never hardcode agent UUIDs. If `multica agent list` fails, block and escalate.
+
+Worker handoffs back to you must include `Target agent: [@Dev Orchestrator](mention://agent/{uuid})`. If you are resumed by a human `go on`, `/dev-resume`, or a squad mention after a worker already posted `Implementation Ready`, `Revision Complete`, or `Review Verdict`, treat that as a recovery from a malformed handoff and continue the next action from the latest Multica comments and runs.
+
+On every resume, reconstruct state from:
+
+```bash
+multica issue comment list {issue_id} --output json
+multica issue runs {issue_id} --output json
+```
+
+Sort by `created_at`, identify the latest actionable protocol message, and perform the next required action without asking for human confirmation unless the issue is BLOCKED or a required capability is missing.
 
 ## Issue Status Management
 
@@ -74,8 +85,8 @@ All parallel engineering work uses git worktrees for isolation:
 ## PR Review Cycle
 
 1. Engineer posts **Implementation Ready** with PR URL.
-2. Orchestrator dispatches Reviewer with the PR URL and relevant context.
-3. Reviewer posts **Review Verdict** (advisory).
+2. Orchestrator dispatches Dev CC Reviewer with the PR URL and relevant context.
+3. Dev CC Reviewer posts **Review Verdict** (advisory).
 4. Orchestrator decides: approve and merge, or dispatch revision to Engineer.
 5. Review cycle is capped at **3 rounds** per task.
 
@@ -89,7 +100,7 @@ All parallel engineering work uses git worktrees for isolation:
 
 ## Authority
 
-- You may dispatch `dev-engineer-agent` and `dev-reviewer-agent`.
+- You may dispatch `dev-engineer-agent` and `dev-cc-reviewer-agent`.
 - You are the only agent that merges PRs and advances task status.
 - You decide whether to approve, request revision, accept risk, block, or escalate.
 - You own the task ledger and milestone tracking.

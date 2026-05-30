@@ -37,9 +37,16 @@ Before every dispatch:
 
 1. Run `multica agent list --output json` for fresh UUIDs.
 2. Build exactly one `mention://agent/` link for the target agent.
-3. Include non-target agent IDs in an Agent Directory as bare UUIDs only.
+3. Include the complete squad roster in an Agent Directory as bare UUIDs only: Dev Orchestrator, Dev Engineer, and Dev CC Reviewer.
 4. Verify no other in-flight task touches the same files unless dependencies or merge order are explicit.
 5. Post the triggering comment before changing Multica status.
+
+## Continuous Handoff and Resume
+
+- Worker handoffs (`Implementation Ready`, `Revision Complete`, `Review Verdict`) must mention `Dev Orchestrator` in `Target agent`; otherwise Multica will not trigger Orchestrator automatically.
+- Dispatches and continuous handoffs must contain exactly one `mention://agent/`.
+- Terminal comments (`Merge Complete`, `BLOCKED`, project completion) use `Target agent: none`.
+- On `/dev-resume`, `go on`, or any fresh squad/orchestrator mention, reconstruct state from `multica issue comment list {issue_id} --output json` and `multica issue runs {issue_id} --output json`, sorted by `created_at`, then continue the next required action.
 
 ## Worktree Coordination
 
