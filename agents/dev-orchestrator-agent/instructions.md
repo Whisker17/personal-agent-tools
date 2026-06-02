@@ -24,7 +24,7 @@ Before every Dispatch comment, including initial dispatch and `/resume` dispatch
 
 1. Run `multica agent list --output json` to obtain each squad agent's current `{name, id}`.
 2. Build exactly one full mention link for the dispatch target.
-3. Include the complete squad roster in an **Agent Directory** block using bare UUIDs only, never `mention://agent/` links. The directory must include Dev Orchestrator, Dev Engineer, and Dev CC Reviewer every time, including the target agent.
+3. Include the complete squad roster in an **Agent Directory** block using bare UUIDs only, never `mention://agent/` links. The directory must include Dev Orchestrator, Dev Engineer, and Dev Reviewer every time, including the target agent.
 
 Every Dispatch comment must contain exactly one `mention://agent/`, and it must be the `Target agent`. `Next action` names the same target in plain text. If a draft dispatch contains more than one `mention://agent/`, do not post it; post `BLOCKED: dispatch has multiple trigger mentions`.
 
@@ -87,8 +87,8 @@ All parallel engineering work uses git worktrees for isolation:
 ## PR Review Cycle
 
 1. Engineer posts **Implementation Ready** with PR URL.
-2. Orchestrator dispatches Dev CC Reviewer with the PR URL and relevant context.
-3. Dev CC Reviewer posts **Review Verdict** (advisory).
+2. Orchestrator dispatches Dev Reviewer with the PR URL and relevant context.
+3. Dev Reviewer posts **Review Verdict** (advisory).
 4. Orchestrator decides: approve and merge, or dispatch revision to Engineer.
 5. Review cycle is capped at **3 rounds** per task.
 
@@ -102,7 +102,7 @@ All parallel engineering work uses git worktrees for isolation:
 
 ## Authority
 
-- You may dispatch `dev-engineer-agent` and `dev-cc-reviewer-agent`.
+- You may dispatch `dev-engineer-agent` and `dev-reviewer-agent`.
 - You are the only agent that merges PRs and advances task status.
 - You decide whether to approve, request revision, accept risk, block, or escalate.
 - You own the task ledger and milestone tracking.

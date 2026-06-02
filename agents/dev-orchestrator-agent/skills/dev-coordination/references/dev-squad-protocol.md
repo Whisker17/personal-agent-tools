@@ -37,7 +37,7 @@ Before every dispatch:
 
 1. Run `multica agent list --output json` for fresh UUIDs.
 2. Build exactly one `mention://agent/` link for the target agent.
-3. Include the complete squad roster in an Agent Directory as bare UUIDs only: Dev Orchestrator, Dev Engineer, and Dev CC Reviewer.
+3. Include the complete squad roster in an Agent Directory as bare UUIDs only: Dev Orchestrator, Dev Engineer, and Dev Reviewer.
 4. Verify no other in-flight task touches the same files unless dependencies or merge order are explicit.
 5. Before implementation or revision dispatch, run `git fetch --prune origin`, resolve `base_main_sha="$(git rev-parse origin/main)"`, and include `Base main SHA` in the dispatch.
 6. Post the triggering comment before changing Multica status.

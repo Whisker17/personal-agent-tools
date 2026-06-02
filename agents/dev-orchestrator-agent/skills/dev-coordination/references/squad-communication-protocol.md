@@ -12,7 +12,7 @@ This protocol governs inter-agent coordination for the three runtime dev squad a
 |---|---|
 | **Dev Orchestrator** | Decomposes requirements, dispatches work, owns state transitions, merges PRs |
 | **Dev Engineer** | Implements features, writes tests, opens PRs in isolated worktrees |
-| **Dev CC Reviewer** | Adversarially reviews PRs via Claude structural + Codex adversarial review, posts advisory verdicts |
+| **Dev Reviewer** | Adversarially reviews PRs for correctness, security, performance, and test coverage, posts advisory verdicts |
 
 ## 2. Repository and Branch Convention
 
@@ -223,7 +223,7 @@ Orchestrator provides the complete roster in every Dispatch comment:
 **Agent Directory** (non-triggering, for handoff construction; bare UUIDs only):
 - Dev Orchestrator: `{orchestrator-id}`
 - Dev Engineer: `{engineer-id}`
-- Dev CC Reviewer: `{reviewer-id}`
+- Dev Reviewer: `{reviewer-id}`
 ```
 
 ### 7.1 Dispatch: Implementation
@@ -254,7 +254,7 @@ Orchestrator provides the complete roster in every Dispatch comment:
 **Agent Directory** (non-triggering, for handoff construction):
 - Dev Orchestrator: `{orchestrator-id}`
 - Dev Engineer: `{engineer-id}`
-- Dev CC Reviewer: `{reviewer-id}`
+- Dev Reviewer: `{reviewer-id}`
 ```
 
 ### 7.2 Implementation Ready
@@ -291,8 +291,8 @@ Orchestrator provides the complete roster in every Dispatch comment:
 **Round**: {n}
 **PR**: {pr_url}
 **Multica status**: In Review
-**Target agent**: [@Dev CC Reviewer](mention://agent/{reviewer-id})
-**Next action**: Dev CC Reviewer reviews PR and posts Review Verdict
+**Target agent**: [@Dev Reviewer](mention://agent/{reviewer-id})
+**Next action**: Dev Reviewer reviews PR and posts Review Verdict
 
 **Review focus**: {areas to focus on, or "general"}
 **Design doc**: {path, or "none"}
@@ -300,7 +300,7 @@ Orchestrator provides the complete roster in every Dispatch comment:
 **Agent Directory** (non-triggering, for handoff construction):
 - Dev Orchestrator: `{orchestrator-id}`
 - Dev Engineer: `{engineer-id}`
-- Dev CC Reviewer: `{reviewer-id}`
+- Dev Reviewer: `{reviewer-id}`
 ```
 
 ### 7.4 Review Verdict
@@ -350,7 +350,7 @@ Orchestrator provides the complete roster in every Dispatch comment:
 **Agent Directory** (non-triggering, for handoff construction):
 - Dev Orchestrator: `{orchestrator-id}`
 - Dev Engineer: `{engineer-id}`
-- Dev CC Reviewer: `{reviewer-id}`
+- Dev Reviewer: `{reviewer-id}`
 ```
 
 ### 7.6 Revision Complete

@@ -7,7 +7,7 @@ These instructions are injected into the leader agent's (Orchestrator) prompt fo
 | Agent | Role | Dispatched by |
 |---|---|---|
 | **Dev Engineer Agent** | Implements features, writes tests, opens PRs in isolated worktrees | Orchestrator |
-| **Dev CC Reviewer Agent** | Adversarially reviews PRs via Claude structural + Codex adversarial review, posts advisory verdicts | Orchestrator |
+| **Dev Reviewer Agent** | Adversarially reviews PRs for correctness, security, performance, and test coverage, posts advisory verdicts | Orchestrator |
 
 ## Working Agreements
 

@@ -126,7 +126,7 @@ class DevSquadDispatchPolicyTests(unittest.TestCase):
             root = Path(td)
             protocol = root / "squads" / "dev-squad" / "protocol.md"
             engineer = root / "agents" / "dev-engineer-agent" / "instructions.md"
-            reviewer = root / "agents" / "dev-cc-reviewer-agent" / "instructions.md"
+            reviewer = root / "agents" / "dev-reviewer-agent" / "instructions.md"
             orchestrator = root / "agents" / "dev-orchestrator-agent" / "instructions.md"
             squad_yaml = root / "squads" / "dev-squad" / "squad.yaml"
             protocol.parent.mkdir(parents=True)
@@ -139,7 +139,7 @@ name: dev-squad
 members:
   orchestrator: agents/dev-orchestrator-agent
   engineer: agents/dev-engineer-agent
-  reviewer: agents/dev-reviewer-agent
+  reviewer: agents/dev-cc-reviewer-agent
 protocol: squads/dev-squad/protocol.md
 """,
                 encoding="utf-8",
@@ -149,7 +149,7 @@ protocol: squads/dev-squad/protocol.md
 Multica, not Linear.
 Continuous Handoff requires exactly one trigger mention.
 Use `multica issue runs` during resume.
-Dev CC Reviewer is the reviewer.
+Dev Reviewer is the reviewer.
 Non-target agents do not post a Multica issue comment; use cancel/no-op if needed.
 
 ```markdown
@@ -174,15 +174,15 @@ Non-target agents do not post a Multica issue comment; use cancel/no-op if neede
             )
             engineer.write_text("Post Implementation Ready when done.", encoding="utf-8")
             reviewer.write_text("Post Review Verdict when done.", encoding="utf-8")
-            orchestrator.write_text("You may dispatch dev-engineer-agent and dev-reviewer-agent.", encoding="utf-8")
+            orchestrator.write_text("You may dispatch dev-engineer-agent and dev-cc-reviewer-agent.", encoding="utf-8")
 
             errors = validate.validate_dev_squad_dispatch_policy(root)
 
-        self.assertTrue(any("dev-cc-reviewer-agent" in err for err in errors), errors)
+        self.assertTrue(any("dev-reviewer-agent" in err for err in errors), errors)
         self.assertTrue(any("Implementation Ready" in err and "Target agent" in err for err in errors), errors)
         self.assertTrue(any("Review Verdict" in err and "Target agent" in err for err in errors), errors)
-        self.assertTrue(any("Agent Directory" in err and "Dev CC Reviewer" in err for err in errors), errors)
-        self.assertTrue(any("legacy dev-reviewer-agent" in err for err in errors), errors)
+        self.assertTrue(any("Agent Directory" in err and "Dev Reviewer" in err for err in errors), errors)
+        self.assertTrue(any("legacy dev-cc-reviewer-agent" in err for err in errors), errors)
         self.assertTrue(any("fresh main fetch" in err for err in errors), errors)
         self.assertTrue(any("stale base ancestry check" in err for err in errors), errors)
         self.assertTrue(any("remote branch cleanup" in err for err in errors), errors)
@@ -192,7 +192,7 @@ Non-target agents do not post a Multica issue comment; use cancel/no-op if neede
             root = Path(td)
             protocol = root / "squads" / "dev-squad" / "protocol.md"
             engineer = root / "agents" / "dev-engineer-agent" / "instructions.md"
-            reviewer = root / "agents" / "dev-cc-reviewer-agent" / "instructions.md"
+            reviewer = root / "agents" / "dev-reviewer-agent" / "instructions.md"
             orchestrator = root / "agents" / "dev-orchestrator-agent" / "instructions.md"
             dev_skill = root / "agents" / "dev-orchestrator-agent" / "skills" / "dev-coordination" / "SKILL.md"
             dev_protocol_copy = (
@@ -216,7 +216,7 @@ name: dev-squad
 members:
   orchestrator: agents/dev-orchestrator-agent
   engineer: agents/dev-engineer-agent
-  reviewer: agents/dev-cc-reviewer-agent
+  reviewer: agents/dev-reviewer-agent
 protocol: squads/dev-squad/protocol.md
 """,
                 encoding="utf-8",
@@ -234,13 +234,13 @@ Engineer must run `git fetch --prune origin`, record `base_main_sha`, include `B
 After merge, Orchestrator must run `git push origin --delete {branch}` and report `Remote branch deleted`.
 
 ## Dispatch: Review
-**Target agent**: [@Dev CC Reviewer](mention://agent/{reviewer-id})
-**Next action**: Dev CC Reviewer reviews the PR.
+**Target agent**: [@Dev Reviewer](mention://agent/{reviewer-id})
+**Next action**: Dev Reviewer reviews the PR.
 
 **Agent Directory**:
 - Dev Orchestrator: `{orchestrator-id}`
 - Dev Engineer: `{engineer-id}`
-- Dev CC Reviewer: `{reviewer-id}`
+- Dev Reviewer: `{reviewer-id}`
 
 ## Implementation Ready
 **Target agent**: [@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})
@@ -285,7 +285,7 @@ If this agent is not the target, do not post a Multica issue comment; use cancel
                 encoding="utf-8",
             )
             orchestrator.write_text(
-                "You may dispatch dev-engineer-agent and dev-cc-reviewer-agent. "
+                "You may dispatch dev-engineer-agent and dev-reviewer-agent. "
                 "Before dispatch run `git fetch --prune origin` and include `Base main SHA`. "
                 "After merge run `git push origin --delete {branch}` and report `Remote branch deleted`. "
                 "Resume by reading comments and `multica issue runs`.",

@@ -72,11 +72,11 @@ DEV_POLICY_GLOBS = [
     "squads/dev-squad/*.md",
     "agents/dev-orchestrator-agent/**/*.md",
     "agents/dev-engineer-agent/instructions.md",
-    "agents/dev-cc-reviewer-agent/instructions.md",
+    "agents/dev-reviewer-agent/instructions.md",
 ]
 DEV_WORKER_POLICY_FILES = [
     "agents/dev-engineer-agent/instructions.md",
-    "agents/dev-cc-reviewer-agent/instructions.md",
+    "agents/dev-reviewer-agent/instructions.md",
 ]
 DEV_ENGINEER_POLICY_FILE = "agents/dev-engineer-agent/instructions.md"
 DEV_ORCHESTRATOR_POLICY_FILE = "agents/dev-orchestrator-agent/instructions.md"
@@ -135,6 +135,7 @@ def _fallback_safe_load(text):
     data = {}
     current_key = None
     current_list = None
+    current_mapping = None
 
     for lineno, raw_line in enumerate(text.splitlines(), start=1):
         line = raw_line.split("#", 1)[0].rstrip()
@@ -147,6 +148,7 @@ def _fallback_safe_load(text):
         if indent == 0:
             current_key = None
             current_list = None
+            current_mapping = None
             if ":" not in stripped:
                 raise YamlParseError(f"line {lineno}: expected key: value")
             key, value = stripped.split(":", 1)
@@ -175,6 +177,16 @@ def _fallback_safe_load(text):
             key, value = stripped.split(":", 1)
             current_list[-1][key.strip()] = _parse_scalar(value)
             continue
+
+        if current_key is not None and ":" in stripped and not stripped.startswith("- "):
+            if current_mapping is None and isinstance(data.get(current_key), list) and not data[current_key]:
+                current_mapping = {}
+                data[current_key] = current_mapping
+                current_list = None
+            if current_mapping is not None:
+                key, value = stripped.split(":", 1)
+                current_mapping[key.strip()] = _parse_scalar(value)
+                continue
 
         if current_key is not None:
             continue
@@ -470,8 +482,8 @@ def validate_dev_squad_dispatch_policy(root=REPO_ROOT):
             errors.append(f"Dev squad YAML parse error: {e}")
         else:
             members = data.get("members") if isinstance(data, dict) else None
-            if not isinstance(members, dict) or members.get("reviewer") != "agents/dev-cc-reviewer-agent":
-                errors.append(f"{DEV_SQUAD_CONFIG}: reviewer must be agents/dev-cc-reviewer-agent")
+            if not isinstance(members, dict) or members.get("reviewer") != "agents/dev-reviewer-agent":
+                errors.append(f"{DEV_SQUAD_CONFIG}: reviewer must be agents/dev-reviewer-agent")
             if isinstance(data, dict) and data.get("protocol") != DEV_PROTOCOL_CANONICAL:
                 errors.append(f"{DEV_SQUAD_CONFIG}: protocol must be {DEV_PROTOCOL_CANONICAL}")
 
@@ -488,10 +500,10 @@ def validate_dev_squad_dispatch_policy(root=REPO_ROOT):
                 errors.append(f"{relpath}: Agent Directory must not contain mention://agent links")
                 break
 
-        if path in orchestrator_files and "dev-reviewer-agent" in text:
-            errors.append(f"{relpath}: legacy dev-reviewer-agent reference found; use dev-cc-reviewer-agent")
-        if path in orchestrator_files and "Dev Reviewer" in text and "Dev CC Reviewer" not in text:
-            errors.append(f"{relpath}: legacy Dev Reviewer reference found; use Dev CC Reviewer")
+        if path in orchestrator_files and "dev-cc-reviewer-agent" in text:
+            errors.append(f"{relpath}: legacy dev-cc-reviewer-agent reference found; use dev-reviewer-agent")
+        if path in orchestrator_files and "Dev CC Reviewer" in text:
+            errors.append(f"{relpath}: legacy Dev CC Reviewer reference found; use Dev Reviewer")
 
         if path in worker_files:
             required_worker_terms = {
@@ -528,7 +540,7 @@ def validate_dev_squad_dispatch_policy(root=REPO_ROOT):
             "Multica, not Linear": "Multica runtime boundary",
             "Continuous Handoff": "continuous handoff rule",
             "multica issue runs": "run history resume rule",
-            "Dev CC Reviewer": "new reviewer role",
+            "Dev Reviewer": "reviewer role",
             "Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})": "worker-to-Orchestrator handoff mention",
             "do not post a Multica issue comment": "silent non-target guard",
             "cancel/no-op": "non-target runtime fallback",
@@ -544,7 +556,7 @@ def validate_dev_squad_dispatch_policy(root=REPO_ROOT):
             if any(normalized_title.startswith(prefix) for prefix in DEV_DISPATCH_TEMPLATE_PREFIXES):
                 if body.count("mention://agent/") != 1:
                     errors.append(f"{DEV_PROTOCOL_CANONICAL}: dispatch section '{title}' must contain exactly one trigger mention")
-                for agent_name in ["Dev Orchestrator", "Dev Engineer", "Dev CC Reviewer"]:
+                for agent_name in ["Dev Orchestrator", "Dev Engineer", "Dev Reviewer"]:
                     if agent_name not in body:
                         errors.append(f"{DEV_PROTOCOL_CANONICAL}: Agent Directory in '{title}' must include {agent_name}")
 

@@ -108,9 +108,11 @@ Apply these lenses to every review. Weight by `{{review_focus}}` if provided.
 
 ## Mention Link Handoff
 
-Every Review Verdict comment must contain exactly one full mention link in `Target agent`: `[@Orchestrator](mention://agent/{uuid})`. Build that link from the bare Orchestrator UUID in the Orchestrator's Agent Directory. Never convert the whole Agent Directory into mention links, and do not call the agent-list CLI yourself.
+Every Review Verdict comment must contain exactly one full mention link in `Target agent`: `[@Dev Orchestrator](mention://agent/{orchestrator-id-from-directory})`. Build that link from the bare Dev Orchestrator UUID in the Orchestrator's Agent Directory. Never convert the whole Agent Directory into mention links, and do not call the agent-list CLI yourself.
 
-If a task is triggered but `Target agent` is not Dev Reviewer Agent, do not post a Multica issue comment. Record the ignored task in runtime output only.
+Before posting, verify the comment body contains exactly one `mention://agent/`. If it contains zero, the workflow will stall. If it contains more than one, Multica may trigger non-target agents.
+
+If a task is triggered but `Target agent` is not Dev Reviewer Agent, do not post a Multica issue comment. If Multica runtime requires an issue-visible terminal action, use the platform's cancel/no-op mechanism rather than writing noise into the issue thread.
 
 ## Boundaries
 

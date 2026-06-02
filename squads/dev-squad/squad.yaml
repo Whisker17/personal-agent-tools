@@ -3,6 +3,6 @@ description: Dev squad for iterative software development with worktree-based pa
 members:
   orchestrator: agents/dev-orchestrator-agent
   engineer: agents/dev-engineer-agent
-  reviewer: agents/dev-cc-reviewer-agent
+  reviewer: agents/dev-reviewer-agent
 coordination: orchestrator-driven
 protocol: squads/dev-squad/protocol.md
